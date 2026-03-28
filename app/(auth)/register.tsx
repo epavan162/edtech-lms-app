@@ -11,6 +11,7 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Mail, Lock, Eye, EyeOff, ArrowLeft, Users } from 'lucide-react-native';
@@ -97,6 +98,16 @@ export default function RegisterScreen() {
 
           {/* Hero */}
           <View style={{ marginBottom: 32 }}>
+            <Image
+              source={require('../../assets/android-icon-foreground.png')}
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 16,
+                marginBottom: 24,
+              }}
+              contentFit="cover"
+            />
             <Text
               style={{
                 fontFamily: 'Manrope_700Bold',

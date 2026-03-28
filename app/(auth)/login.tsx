@@ -13,6 +13,7 @@ import {
   Alert,
   Animated,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
@@ -98,29 +99,16 @@ export default function LoginScreen() {
         >
           {/* Hero Section */}
           <Animated.View style={{ alignItems: 'center', marginBottom: 48, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-            <LinearGradient
-              colors={[Colors.primary, Colors.primaryContainer]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+            <Image
+              source={require('../../assets/android-icon-foreground.png')}
               style={{
-                width: 64,
-                height: 64,
+                width: 80,
+                height: 80,
                 borderRadius: 20,
-                alignItems: 'center',
-                justifyContent: 'center',
                 marginBottom: 24,
               }}
-            >
-              <Text
-                style={{
-                  fontFamily: 'Manrope_700Bold',
-                  fontSize: 28,
-                  color: Colors.onPrimary,
-                }}
-              >
-                A
-              </Text>
-            </LinearGradient>
+              contentFit="cover"
+            />
             <Text
               style={{
                 fontFamily: 'Manrope_700Bold',

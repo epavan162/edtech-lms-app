@@ -35,32 +35,57 @@ import '../global.css';
 
 SplashScreen.preventAutoHideAsync();
 
-function RootLayoutNav() {
+function RootLayoutNav({ fontsLoaded }: { fontsLoaded: boolean }) {
   const { isAuthenticated, isInitialized } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
+  const inAuthGroup = segments[0] === '(auth)';
+  
+  // Determine if we are on the correct route based on auth state
+  const isOnCorrectRoute = isInitialized && (
+    (isAuthenticated && !inAuthGroup) || 
+    (!isAuthenticated && inAuthGroup)
+  );
+
+  const isReady = fontsLoaded && isInitialized && isOnCorrectRoute;
+
   useEffect(() => {
     if (!isInitialized) return;
-
-    const inAuthGroup = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuthGroup) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isInitialized, segments]);
+  }, [isAuthenticated, isInitialized, inAuthGroup]);
 
-  // While we are waiting for the redirect to fire (even if it's instant in code), 
-  // returns null to stay on the Splash Screen (managed in the parent component)
+  useEffect(() => {
+    if (isReady) {
+      // Small buffer to ensure the targeted screen is painted
+      const timer = setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 100); 
+      return () => clearTimeout(timer);
+    }
+  }, [isReady]);
+
+  // If not initialized, return null (Splash screen stays up)
   if (!isInitialized) return null;
+
+  // If we are initialized but NOT on the correct route yet, 
+  // we return null (or a splash-colored View) to keep the screen clean while redirecting.
+  // This is crucial for Web where SplashScreen.preventAutoHideAsync() might not be as reliable.
+  if (!isOnCorrectRoute) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#3730A3' }} />
+    );
+  }
 
   return <Slot />;
 }
 
 function RootLayout() {
-  const { isInitialized } = useAuth();
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_500Medium,
@@ -70,18 +95,6 @@ function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
   });
-
-  const isReady = fontsLoaded && isInitialized;
-
-  useEffect(() => {
-    if (isReady) {
-      // Small buffer to ensure the first frame of the targeted screen is ready
-      const timer = setTimeout(() => {
-        SplashScreen.hideAsync();
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isReady]);
 
   useEffect(() => {
     // Request notification permissions and schedule inactivity reminder
@@ -117,7 +130,7 @@ function RootLayout() {
         <StoreProvider>
           <ToastProvider>
             <StatusBar style="dark" />
-            <RootLayoutNav />
+            <RootLayoutNav fontsLoaded={fontsLoaded} />
           </ToastProvider>
         </StoreProvider>
       </ErrorBoundary>
