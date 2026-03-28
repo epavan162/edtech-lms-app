@@ -263,7 +263,7 @@ export default function CoursesScreen() {
                     marginBottom: 16,
                   }}
                 >
-                  AI Recommendations ✨
+                  Suggested for you ✨
                 </Text>
                 <View style={{ gap: 16 }}>
                   {recommendedCourses.map((item) => (

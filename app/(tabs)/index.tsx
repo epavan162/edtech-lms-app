@@ -226,7 +226,7 @@ export default function HomeScreen() {
           marginBottom: 16,
         }}
       >
-        {searchQuery ? `Results for "${searchQuery}"` : 'Curated for you'}
+        {searchQuery ? `Results for "${searchQuery}"` : 'Suggested for you'}
       </Text>
     </View>
   );
