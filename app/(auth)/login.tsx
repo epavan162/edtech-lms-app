@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
 import {
   View,
   Text,
@@ -6,17 +9,24 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  TouchableOpacity,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, Fingerprint } from 'lucide-react-native';
+import * as LocalAuthentication from 'expo-local-authentication';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { useAuth } from '../../src/store/auth';
 import { useToast } from '../../src/components/ui/Toast';
-import { loginSchema, validateForm } from '../../src/utils/validation';
+import { loginSchema } from '../../src/utils/validation';
+
+import { storage } from '../../src/utils/storage';
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 import { Colors } from '../../src/theme';
 import { AxiosError } from 'axios';
 
@@ -24,31 +34,78 @@ export default function LoginScreen() {
   const router = useRouter();
   const { login, isLoading } = useAuth();
   const { showToast } = useToast();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+  });
 
-  const validate = (): boolean => {
-    const fieldErrors = validateForm(loginSchema, { username: username.trim(), password });
-    if (fieldErrors) {
-      setErrors(fieldErrors as { username?: string; password?: string });
-      return false;
-    }
-    setErrors({});
-    return true;
-  };
+  // Check biometric availability on mount
+  React.useEffect(() => {
+    const checkBiometric = async () => {
+      if (Platform.OS === 'web') return;
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        const hasCreds = await storage.getItem('bio_username');
+        setBiometricAvailable(hasHardware && isEnrolled && !!hasCreds);
+      } catch {
+        setBiometricAvailable(false);
+      }
+    };
+    checkBiometric();
+  }, []);
 
-  const handleLogin = async () => {
-    if (!validate()) return;
+  const handleLogin = async (data: LoginFormValues) => {
     try {
-      await login({ username: username.trim(), password });
+      await login({ username: data.username.trim(), password: data.password });
       showToast('Welcome back! Signed in successfully.', 'success');
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
       const message =
         axiosError.response?.data?.message ?? 'Login failed. Please try again.';
       showToast(message, 'error');
+    }
+  };
+
+  const handleBiometricAuth = async () => {
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      
+      if (!hasHardware || !isEnrolled) {
+        showToast('Biometrics not available or not enrolled on this device.', 'error');
+        return;
+      }
+
+      // Retrieve stored credentials from previous login
+      const savedUsername = await storage.getItem('bio_username');
+      const savedPassword = await storage.getItem('bio_password');
+
+      if (!savedUsername || !savedPassword) {
+        showToast('Please sign in with password first to enable biometrics.', 'info');
+        return;
+      }
+
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Sign in to The Atelier',
+        fallbackLabel: 'Use Password',
+      });
+
+      if (result.success) {
+        await login({ username: savedUsername, password: savedPassword });
+        showToast('Authenticated via Biometrics.', 'success');
+      }
+    } catch (err) {
+      showToast('Biometric authentication failed.', 'error');
     }
   };
 
@@ -69,7 +126,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Hero Section */}
-          <View style={{ alignItems: 'center', marginBottom: 48 }}>
+          <Animated.View entering={FadeInDown.duration(800).springify()} style={{ alignItems: 'center', marginBottom: 48 }}>
             <LinearGradient
               colors={[Colors.primary, Colors.primaryContainer]}
               start={{ x: 0, y: 0 }}
@@ -117,46 +174,53 @@ export default function LoginScreen() {
             >
               Curating your path to mastery.
             </Text>
-          </View>
+          </Animated.View>
 
           {/* Form */}
-          <View style={{ gap: 16, marginBottom: 24 }}>
-            <Input
-              label="Username"
-              placeholder="Enter your username"
-              value={username}
-              onChangeText={(text) => {
-                setUsername(text);
-                if (errors.username) setErrors((e) => ({ ...e, username: undefined }));
-              }}
-              autoCapitalize="none"
-              autoCorrect={false}
-              error={errors.username}
-              icon={<Mail size={18} color={Colors.outline} strokeWidth={1.5} />}
+          <Animated.View entering={FadeInDown.delay(200).duration(800).springify()} style={{ gap: 16, marginBottom: 24 }}>
+            <Controller
+              control={control}
+              name="username"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Username"
+                  placeholder="Enter your username"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  error={errors.username?.message}
+                  icon={<Mail size={18} color={Colors.outline} strokeWidth={1.5} />}
+                />
+              )}
             />
-            <Input
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errors.password) setErrors((e) => ({ ...e, password: undefined }));
-              }}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              error={errors.password}
-              icon={<Lock size={18} color={Colors.outline} strokeWidth={1.5} />}
-              rightIcon={
-                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-                  {showPassword ? (
-                    <EyeOff size={18} color={Colors.outline} strokeWidth={1.5} />
-                  ) : (
-                    <Eye size={18} color={Colors.outline} strokeWidth={1.5} />
-                  )}
-                </Pressable>
-              }
+            
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Password"
+                  placeholder="Enter your password"
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  error={errors.password?.message}
+                  icon={<Lock size={18} color={Colors.outline} strokeWidth={1.5} />}
+                  rightIcon={
+                    <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                      {showPassword ? (
+                        <EyeOff size={18} color={Colors.outline} strokeWidth={1.5} />
+                      ) : (
+                        <Eye size={18} color={Colors.outline} strokeWidth={1.5} />
+                      )}
+                    </Pressable>
+                  }
+                />
+              )}
             />
-          </View>
+          </Animated.View>
 
           <Pressable style={{ alignSelf: 'flex-end', marginBottom: 32 }}>
             <Text
@@ -170,12 +234,21 @@ export default function LoginScreen() {
             </Text>
           </Pressable>
 
-          <Button
-            title="Sign In"
-            onPress={handleLogin}
-            loading={isLoading}
-            fullWidth
-          />
+          <View style={{ gap: 16 }}>
+            <Button
+              title="Sign In"
+              onPress={handleSubmit(handleLogin)}
+              loading={isLoading}
+              fullWidth
+            />
+            <Button
+              title="Sign in with Biometrics"
+              onPress={handleBiometricAuth}
+              variant="outline"
+              fullWidth
+              icon={<Fingerprint size={18} color={Colors.primary} strokeWidth={1.5} />}
+            />
+          </View>
 
           {/* Footer */}
           <View
@@ -195,7 +268,10 @@ export default function LoginScreen() {
             >
               New curator?
             </Text>
-            <Pressable onPress={() => router.push('/(auth)/register')}>
+            <TouchableOpacity 
+              onPress={() => router.push('/(auth)/register')}
+              hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+            >
               <Text
                 style={{
                   fontFamily: 'Inter_600SemiBold',
@@ -205,7 +281,7 @@ export default function LoginScreen() {
               >
                 Create an account
               </Text>
-            </Pressable>
+            </TouchableOpacity>
           </View>
 
           {/* Bottom links */}

@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Alert } from 'react-native';
+import * as Device from 'expo-device';
 import {
   useFonts,
   Manrope_400Regular,
@@ -22,6 +23,13 @@ import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { ToastProvider } from '../src/components/ui/Toast';
 import { notificationService } from '../src/services/notifications';
 import { Colors } from '../src/theme';
+import * as Sentry from '@sentry/react-native';
+import { initializeSentry } from '../src/services/sentry';
+import { analytics } from '../src/services/analytics';
+
+// Initialize Sentry before the app mounts
+initializeSentry();
+analytics.init();
 
 import '../global.css';
 
@@ -67,7 +75,7 @@ function RootLayoutNav() {
   return <Slot />;
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_500Medium,
@@ -89,6 +97,23 @@ export default function RootLayout() {
     notificationService.requestPermissions();
     notificationService.scheduleInactivityReminder();
     notificationService.recordAppOpen();
+
+    // Jailbreak/Root Detection
+    const checkSecurity = async () => {
+      try {
+        const isRooted = await Device.isRootedExperimentalAsync();
+        if (isRooted) {
+          Alert.alert(
+            'Security Warning',
+            'This device appears to be rooted or jailbroken. For your security, please be cautious.',
+            [{ text: 'I understand' }]
+          );
+        }
+      } catch (error) {
+        // Silently ignore if unsupported on platform
+      }
+    };
+    checkSecurity();
   }, []);
 
   if (!fontsLoaded) {
@@ -108,3 +133,5 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

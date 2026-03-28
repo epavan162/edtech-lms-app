@@ -32,6 +32,12 @@
 - 24-hour inactivity reminder
 - Platform-guarded (skipped on web)
 
+### Biometric Authentication
+- Face ID / Fingerprint sign-in via `expo-local-authentication`
+- Credentials stored securely after first password login
+- Biometric availability check on app launch
+- Graceful fallback on web (biometric skipped)
+
 ### State Management & Persistence
 - Auth state with SecureStore / localStorage (cross-platform)
 - Course bookmarks & enrollments with AsyncStorage
@@ -46,23 +52,33 @@
 - User-friendly toast notifications for all actions
 - WebView error state with retry button
 
+### Testing & Quality
+- **104 tests** with **>80% code coverage**
+- Comprehensive unit tests for services, stores, and utilities
+- Component rendering tests for all major screens
+- CI pipeline enforces ≥70% coverage before APK build
+
 ---
 
 ## 🛠 Technology Stack
 
 | Category | Technology |
 |---|---|
-| Framework | React Native Expo (SDK 53) |
+| Framework | React Native Expo (SDK 55) |
 | Language | TypeScript (strict mode) |
 | Navigation | Expo Router (file-based) |
 | Styling | Vanilla StyleSheet (Material Design 3 tokens) |
 | Secure Storage | Expo SecureStore + localStorage fallback |
-| App Data | AsyncStorage (via Zustand-like persist) |
+| App Data | AsyncStorage / MMKV |
 | Images | Expo Image (with caching + blurhash) |
-| Validation | Zod |
+| Forms | React Hook Form + Zod validation |
 | Notifications | Expo Notifications |
+| Biometrics | expo-local-authentication |
 | WebView | react-native-webview |
 | HTTP | Axios (interceptors, retry, timeout) |
+| Error Tracking | Sentry (`@sentry/react-native`) |
+| Analytics | Custom analytics service |
+| Testing | Jest + React Native Testing Library |
 | Icons | lucide-react-native |
 
 ---
@@ -108,20 +124,58 @@ npx expo start --ios
 npx expo start --android
 ```
 
-### Build APK
+### Build APK (Cloud / EAS)
+The standard Expo way using EAS Build (requires an Expo account):
 ```bash
 # Install EAS CLI
 npm install -g eas-cli
 
-# Login to Expo
-eas login
-
-# Build development APK
-eas build --platform android --profile development
-
 # Build production APK
 eas build --platform android --profile preview
 ```
+
+### Build APK (Local / Fast)
+This project includes a **CI/CD pipeline** (GitHub Actions) that builds the APK directly using Gradle. You can replicate this locally for much faster builds without waiting for EAS queues:
+
+**Requirements:**
+- Android Studio + SDK installed
+- Java JDK 17 installed
+- `ANDROID_HOME` set in your terminal
+
+**Build Steps:**
+```bash
+# 1. Generate the native android folder
+npx expo prebuild --platform android --clean
+
+# 2. Build the APK using Gradle
+cd android
+./gradlew assembleRelease
+```
+The resulting APK will be located at:
+`android/app/build/outputs/apk/release/app-release.apk`
+
+---
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run with coverage report
+npm test -- --coverage
+```
+
+**Current Coverage:** 104 tests passing, >80% line coverage.
+
+---
+
+## 🤖 Deployment (CI/CD)
+The project is configured with **GitHub Actions**. Every push to the `main` branch automatically:
+1. **Runs tests** with coverage enforcement (≥70% threshold).
+2. **Only if tests pass**, runs `npx expo prebuild` to generate the native project.
+3. Runs `./gradlew assembleRelease` to compile the APK.
+4. **Auto-releases**: Generates a new version tag (e.g., `v0.5`) and attaches the APK to a GitHub Release.
+
 
 ---
 

@@ -1,3 +1,5 @@
+import type { User } from '../types';
+
 /**
  * Image URL utilities for handling broken CDN links.
  *
@@ -81,4 +83,27 @@ export function getCourseThumbnailUrl(
   originalThumbnail?: string,
 ): string {
   return getCourseImageUrl(id, category, originalThumbnail);
+}
+
+/**
+ * Returns a reliable user avatar URL.
+ * Overrides generic placeholder URLs with a custom ui-avatars.com fallback.
+ */
+export function getUserAvatarUrl(user?: User | null): string {
+  const defaultFallback = `https://ui-avatars.com/api/?name=${user?.username || 'U'}&size=120&background=E2DFFF&color=3730A3&bold=true`;
+  
+  if (!user?.avatar?.url) return defaultFallback;
+  
+  const url = user.avatar.url;
+  // FreeAPI sometimes returns string placeholder links or dummy URLs for new users
+  if (
+    url.includes('via.placeholder.com') || 
+    url.includes('default') || 
+    url.includes('dummyjson') || 
+    url.trim() === ''
+  ) {
+    return defaultFallback;
+  }
+  
+  return url;
 }

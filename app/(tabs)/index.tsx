@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
-  FlatList,
   RefreshControl,
   TextInput,
   Pressable,
@@ -19,8 +18,12 @@ import { useAuth } from '../../src/store/auth';
 import { useCourseStore } from '../../src/store/courses';
 import { courseService } from '../../src/services/courses';
 import { notificationService } from '../../src/services/notifications';
+import { analytics } from '../../src/services/analytics';
 import { Colors } from '../../src/theme';
+import { useToast } from '../../src/components/ui/Toast';
 import type { Course, Instructor } from '../../src/types';
+import { getUserAvatarUrl } from '../../src/utils/images';
+import { LegendList } from '@legendapp/list';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -72,6 +75,7 @@ export default function HomeScreen() {
   );
 
   useEffect(() => {
+    analytics.logScreenView('Home Dashboard');
     fetchData(1);
   }, [fetchData]);
 
@@ -98,14 +102,22 @@ export default function HomeScreen() {
     [fetchData],
   );
 
+  const { showToast } = useToast();
+
   const handleBookmark = useCallback(
     async (courseId: number) => {
+      const wasBookmarked = isBookmarked(courseId);
       await toggleBookmark(courseId);
+      if (wasBookmarked) {
+        showToast('Bookmark removed', 'info');
+      } else {
+        showToast('Course bookmarked ✓', 'success');
+      }
       // Check milestone (triggered after toggling)
-      const newCount = isBookmarked(courseId) ? bookmarkCount - 1 : bookmarkCount + 1;
+      const newCount = wasBookmarked ? bookmarkCount - 1 : bookmarkCount + 1;
       notificationService.sendBookmarkMilestone(newCount);
     },
-    [toggleBookmark, isBookmarked, bookmarkCount],
+    [toggleBookmark, isBookmarked, bookmarkCount, showToast],
   );
 
   const getInstructorForCourse = useCallback(
@@ -127,36 +139,33 @@ export default function HomeScreen() {
           marginBottom: 24,
         }}
       >
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, paddingRight: 16 }}>
+          <Text
+            style={{
+              fontFamily: 'Inter_500Medium',
+              fontSize: 14,
+              color: Colors.onSurfaceVariant,
+              marginBottom: 4,
+            }}
+          >
+            Welcome back 👋
+          </Text>
           <Text
             style={{
               fontFamily: 'Manrope_700Bold',
               fontSize: 28,
-              lineHeight: 36,
               color: Colors.onSurface,
               letterSpacing: -0.16,
             }}
+            numberOfLines={1}
+            ellipsizeMode="tail"
           >
-            Hello, {user?.username ?? 'Learner'} 👋
-          </Text>
-          <Text
-            style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 14,
-              color: Colors.onSurfaceVariant,
-              marginTop: 4,
-            }}
-          >
-            What will you master today?
+            {user?.username ?? 'Learner'}
           </Text>
         </View>
         <Pressable onPress={() => router.push('/(tabs)/profile')}>
           <Image
-            source={{
-              uri:
-                user?.avatar?.url ||
-                `https://ui-avatars.com/api/?name=${user?.username || 'U'}&background=E2DFFF&color=3730A3&bold=true`,
-            }}
+            source={{ uri: getUserAvatarUrl(user) }}
             style={{
               width: 44,
               height: 44,
@@ -206,6 +215,8 @@ export default function HomeScreen() {
         )}
       </View>
 
+
+
       {/* Section Title */}
       <Text
         style={{
@@ -235,8 +246,10 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surfaceContainerLow }}>
-      <FlatList
+      <LegendList
         data={courses}
+        estimatedItemSize={320}
+        extraData={bookmarkCount}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item, index }) => (
           <View style={{ paddingHorizontal: 24, paddingBottom: 16 }}>

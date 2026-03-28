@@ -40,3 +40,15 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# test coverage
+coverage/
+
+# editor & IDE
+.gemini/
+.vscode/
+.idea/
+
+# build logs
+all-logs.txt
+latest-builds.json

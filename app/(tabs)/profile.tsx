@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import { getUserAvatarUrl } from '../../src/utils/images';
 import {
   LogOut,
   Settings,
@@ -161,11 +162,7 @@ export default function ProfileScreen() {
         <View style={{ alignItems: 'center', paddingTop: 32, paddingBottom: 24 }}>
           <Pressable onPress={handleAvatarPick} style={{ position: 'relative' }} disabled={updatingAvatar}>
             <Image
-              source={{
-                uri:
-                  user?.avatar?.url ||
-                  `https://ui-avatars.com/api/?name=${user?.username || 'U'}&size=120&background=E2DFFF&color=3730A3&bold=true`,
-              }}
+              source={{ uri: getUserAvatarUrl(user) }}
               style={{
                 width: 96,
                 height: 96,

@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
-  FlatList,
   Pressable,
   RefreshControl,
 } from 'react-native';
@@ -18,6 +17,7 @@ import { Chip } from '../../src/components/ui/Chip';
 import { Colors } from '../../src/theme';
 import { getCourseThumbnailUrl } from '../../src/utils/images';
 import type { Course } from '../../src/types';
+import { LegendList } from '@legendapp/list';
 
 type TabType = 'enrolled' | 'bookmarks';
 
@@ -29,6 +29,7 @@ export default function CoursesScreen() {
   const [bookmarkedCourses, setBookmarkedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [recommendedCourses, setRecommendedCourses] = useState<Course[]>([]);
 
   const fetchCourseDetails = useCallback(async (ids: number[]) => {
     if (ids.length === 0) return [];
@@ -52,6 +53,17 @@ export default function CoursesScreen() {
     ]);
     setEnrolledCourses(enrolled);
     setBookmarkedCourses(bookmarked);
+    
+    // Fetch recommendations if no enrollments
+    if (enrollments.length === 0) {
+      try {
+        const allCourses = await courseService.getCourses();
+        setRecommendedCourses(allCourses.data.data.slice(0, 3));
+      } catch (err) {
+        setRecommendedCourses([]);
+      }
+    }
+    
     setLoading(false);
     setRefreshing(false);
   }, [enrollments, bookmarks, fetchCourseDetails]);
@@ -129,8 +141,9 @@ export default function CoursesScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surfaceContainerLow }}>
-      <FlatList
+      <LegendList
         data={currentData}
+        estimatedItemSize={140}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderCourseItem}
         ListHeaderComponent={
@@ -157,51 +170,139 @@ export default function CoursesScreen() {
               Your active learning path and saved resources.
             </Text>
 
-            {/* Tabs */}
+            {/* Premium Segmented Tabs */}
             <View
               style={{
                 flexDirection: 'row',
-                gap: 8,
+                backgroundColor: Colors.surfaceContainerHigh,
+                borderRadius: 12,
+                padding: 4,
                 marginBottom: 24,
               }}
             >
-              <Pressable onPress={() => setActiveTab('enrolled')}>
-                <Chip
-                  label={`My Courses (${enrollments.length})`}
-                  icon={<BookOpen size={14} color={activeTab === 'enrolled' ? Colors.primary : Colors.onSecondaryContainer} strokeWidth={1.5} />}
-                  variant={activeTab === 'enrolled' ? 'primary' : 'default'}
-                />
+              <Pressable 
+                onPress={() => setActiveTab('enrolled')}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 10,
+                  gap: 8,
+                  backgroundColor: activeTab === 'enrolled' ? Colors.surfaceContainerLowest : 'transparent',
+                  borderRadius: 8,
+                  shadowColor: activeTab === 'enrolled' ? '#000' : 'transparent',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: activeTab === 'enrolled' ? 0.05 : 0,
+                  shadowRadius: 4,
+                  elevation: activeTab === 'enrolled' ? 2 : 0,
+                }}
+              >
+                <BookOpen size={16} color={activeTab === 'enrolled' ? Colors.primary : Colors.outline} strokeWidth={activeTab === 'enrolled' ? 2 : 1.5} />
+                <Text style={{ fontFamily: activeTab === 'enrolled' ? 'Inter_600SemiBold' : 'Inter_500Medium', fontSize: 13, color: activeTab === 'enrolled' ? Colors.primary : Colors.outline }}>
+                  My Courses ({enrollments.length})
+                </Text>
               </Pressable>
-              <Pressable onPress={() => setActiveTab('bookmarks')}>
-                <Chip
-                  label={`Bookmarks (${bookmarks.length})`}
-                  icon={<Bookmark size={14} color={activeTab === 'bookmarks' ? Colors.primary : Colors.onSecondaryContainer} strokeWidth={1.5} />}
-                  variant={activeTab === 'bookmarks' ? 'primary' : 'default'}
-                />
+
+              <Pressable 
+                onPress={() => setActiveTab('bookmarks')}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 10,
+                  gap: 8,
+                  backgroundColor: activeTab === 'bookmarks' ? Colors.surfaceContainerLowest : 'transparent',
+                  borderRadius: 8,
+                  shadowColor: activeTab === 'bookmarks' ? '#000' : 'transparent',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: activeTab === 'bookmarks' ? 0.05 : 0,
+                  shadowRadius: 4,
+                  elevation: activeTab === 'bookmarks' ? 2 : 0,
+                }}
+              >
+                <Bookmark size={16} color={activeTab === 'bookmarks' ? Colors.primary : Colors.outline} strokeWidth={activeTab === 'bookmarks' ? 2 : 1.5} />
+                <Text style={{ fontFamily: activeTab === 'bookmarks' ? 'Inter_600SemiBold' : 'Inter_500Medium', fontSize: 13, color: activeTab === 'bookmarks' ? Colors.primary : Colors.outline }}>
+                  Bookmarks ({bookmarks.length})
+                </Text>
               </Pressable>
             </View>
           </View>
         }
         ListEmptyComponent={
-          <EmptyState
-            title={
-              activeTab === 'enrolled'
-                ? 'No active enrollments'
-                : 'Nothing saved yet'
-            }
-            subtitle={
-              activeTab === 'enrolled'
-                ? 'Your gallery of knowledge is currently waiting for its first masterpiece. Start your learning journey today!'
-                : 'As you browse through lessons, use the bookmark icon to save key moments for later review.'
-            }
-            icon={
-              activeTab === 'enrolled' ? (
-                <BookOpen size={32} color={Colors.primary} strokeWidth={1.5} />
-              ) : (
-                <Bookmark size={32} color={Colors.primary} strokeWidth={1.5} />
-              )
-            }
-          />
+          <View>
+            <EmptyState
+              title={
+                activeTab === 'enrolled'
+                  ? 'No active enrollments'
+                  : 'Nothing saved yet'
+              }
+              subtitle={
+                activeTab === 'enrolled'
+                  ? 'Your gallery of knowledge is currently waiting for its first masterpiece. Start your learning journey today!'
+                  : 'As you browse through lessons, use the bookmark icon to save key moments for later review.'
+              }
+              icon={
+                activeTab === 'enrolled' ? (
+                  <BookOpen size={32} color={Colors.primary} strokeWidth={1.5} />
+                ) : (
+                  <Bookmark size={32} color={Colors.primary} strokeWidth={1.5} />
+                )
+              }
+            />
+
+            {/* Embedded AI Recommendations */}
+            {activeTab === 'enrolled' && recommendedCourses.length > 0 && (
+              <View style={{ marginTop: 32, paddingHorizontal: 24, paddingBottom: 32 }}>
+                <Text
+                  style={{
+                    fontFamily: 'Manrope_600SemiBold',
+                    fontSize: 20,
+                    color: Colors.onSurface,
+                    marginBottom: 16,
+                  }}
+                >
+                  AI Recommendations ✨
+                </Text>
+                <View style={{ gap: 16 }}>
+                  {recommendedCourses.map((item) => (
+                    <Pressable
+                      key={`rec-${item.id}`}
+                      onPress={() => router.push(`/course/${item.id}`)}
+                      style={{
+                        backgroundColor: Colors.surfaceContainerLowest,
+                        borderRadius: 16,
+                        overflow: 'hidden',
+                        flexDirection: 'row',
+                        padding: 12,
+                        gap: 12,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.05,
+                        shadowRadius: 8,
+                        elevation: 2,
+                      }}
+                    >
+                      <Image
+                        source={{ uri: getCourseThumbnailUrl(item.id, item.category, item.thumbnail) }}
+                        style={{ width: 80, height: 80, borderRadius: 12 }}
+                        contentFit="cover"
+                      />
+                      <View style={{ flex: 1, justifyContent: 'center', gap: 4 }}>
+                        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: Colors.onSurface }} numberOfLines={2}>
+                          {item.title}
+                        </Text>
+                        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.onSurfaceVariant }} numberOfLines={1}>
+                          ${item.price} • ⭐ {item.rating?.toFixed(1) ?? 'N/A'}
+                        </Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
         }
         refreshControl={
           <RefreshControl

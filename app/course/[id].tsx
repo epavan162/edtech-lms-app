@@ -7,11 +7,14 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { File, Paths, Directory } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import {
   ArrowLeft,
   Bookmark,
@@ -25,6 +28,7 @@ import {
   Infinity,
   Share2,
   Quote,
+  Download,
 } from 'lucide-react-native';
 import { courseService } from '../../src/services/courses';
 import { useCourseStore } from '../../src/store/courses';
@@ -33,8 +37,9 @@ import { useToast } from '../../src/components/ui/Toast';
 import { Button } from '../../src/components/ui/Button';
 import { Card } from '../../src/components/ui/Card';
 import { Chip } from '../../src/components/ui/Chip';
-import { getCourseImageUrl } from '../../src/utils/images';
+import { getCourseImageUrl, getCourseThumbnailUrl } from '../../src/utils/images';
 import { Colors } from '../../src/theme';
+import { analytics } from '../../src/services/analytics';
 import type { Course } from '../../src/types';
 
 const curriculum = [
@@ -67,6 +72,7 @@ export default function CourseDetailScreen() {
   const enrollScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    analytics.logScreenView(`CourseDetail_${courseId}`);
     const fetchCourse = async () => {
       try {
         const res = await courseService.getCourseById(courseId);
@@ -83,21 +89,61 @@ export default function CourseDetailScreen() {
   const handleBookmark = useCallback(async () => {
     await toggleBookmark(courseId);
     const newCount = bookmarked ? bookmarkCount - 1 : bookmarkCount + 1;
+    analytics.trackCourseBookmark(courseId.toString(), course?.title || 'Unknown', !bookmarked);
     showToast(
       bookmarked ? 'Removed from bookmarks' : 'Added to bookmarks ✓',
       bookmarked ? 'info' : 'success',
     );
     notificationService.sendBookmarkMilestone(newCount);
-  }, [toggleBookmark, courseId, bookmarked, bookmarkCount, showToast]);
+  }, [toggleBookmark, courseId, bookmarked, bookmarkCount, showToast, course]);
 
   const handleEnroll = useCallback(async () => {
     setEnrolling(true);
     Animated.spring(enrollScale, { toValue: 0.95, useNativeDriver: true, friction: 8 }).start();
     await enrollCourse(courseId);
+    analytics.trackCourseEnrollment(courseId.toString(), course?.title || 'Unknown');
     Animated.spring(enrollScale, { toValue: 1, useNativeDriver: true, friction: 8 }).start();
     setEnrolling(false);
     showToast('Enrolled successfully! Start learning now.', 'success');
-  }, [enrollCourse, courseId, enrollScale, showToast]);
+  }, [enrollCourse, courseId, enrollScale, showToast, course]);
+
+  const handleDownloadSyllabus = async () => {
+    try {
+      showToast('Downloading course material...', 'info');
+
+      const thumbnailUrl = getCourseThumbnailUrl(courseId, course?.category, course?.images?.[0] || course?.thumbnail);
+
+      if (Platform.OS === 'web') {
+        // Web: use fetch + blob download
+        const response = await fetch(thumbnailUrl);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `course-material-${courseId}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Download complete!', 'success');
+      } else {
+        // Native: use expo-file-system
+        const destination = new Directory(Paths.cache, 'downloads');
+        if (!destination.exists) {
+          destination.create();
+        }
+        const destFile = new File(destination, `course-material-${courseId}.jpg`);
+        const downloadedFile = await File.downloadFileAsync(thumbnailUrl, destFile);
+        showToast('Download complete!', 'success');
+
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(downloadedFile.uri);
+        }
+      }
+    } catch (error: any) {
+      showToast('Failed to download course material', 'error');
+    }
+  };
 
   if (loading) {
     return (
@@ -193,6 +239,19 @@ export default function CourseDetailScreen() {
                 }}
               >
                 <Share2 size={20} color={Colors.onSurface} strokeWidth={1.5} />
+              </Pressable>
+              <Pressable
+                onPress={handleDownloadSyllabus}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Download size={20} color={Colors.onSurface} strokeWidth={1.5} />
               </Pressable>
             </View>
           </View>

@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import type { z } from 'zod';
 import {
   View,
   Text,
@@ -16,40 +19,39 @@ import { Input } from '../../src/components/ui/Input';
 import { useAuth } from '../../src/store/auth';
 import { useToast } from '../../src/components/ui/Toast';
 import { Colors } from '../../src/theme';
+import { registerSchema } from '../../src/utils/validation';
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 import { AxiosError } from 'axios';
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { register, isLoading } = useAuth();
   const { showToast } = useToast();
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{
-    username?: string;
-    email?: string;
-    password?: string;
-  }>({});
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const validate = (): boolean => {
-    const newErrors: typeof errors = {};
-    if (!username.trim()) newErrors.username = 'Username is required';
-    if (username.length > 0 && username.length < 3)
-      newErrors.username = 'Username must be at least 3 characters';
-    if (!email.trim()) newErrors.email = 'Email is required';
-    if (email && !email.includes('@')) newErrors.email = 'Invalid email address';
-    if (!password.trim()) newErrors.password = 'Password is required';
-    if (password.length > 0 && password.length < 8)
-      newErrors.password = 'Must be at least 8 characters with a symbol';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
-  const handleRegister = async () => {
-    if (!validate()) return;
+  const handleRegister = async (data: RegisterFormValues) => {
     try {
-      await register({ username: username.trim(), email: email.trim(), password });
+      await register({
+        username: data.username.trim(),
+        email: data.email.trim(),
+        password: data.password,
+      });
       showToast('Account created! Please sign in.', 'success');
       // Navigate to login so user can sign in with new credentials
       router.replace('/(auth)/login');
@@ -171,53 +173,64 @@ export default function RegisterScreen() {
 
           {/* Form */}
           <View style={{ gap: 16, marginTop: 24, marginBottom: 12 }}>
-            <Input
-              label="Username"
-              placeholder="Choose a username"
-              value={username}
-              onChangeText={(text) => {
-                setUsername(text);
-                if (errors.username) setErrors((e) => ({ ...e, username: undefined }));
-              }}
-              autoCapitalize="none"
-              autoCorrect={false}
-              error={errors.username}
-              icon={<User size={18} color={Colors.outline} strokeWidth={1.5} />}
+            <Controller
+              control={control}
+              name="username"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Username"
+                  placeholder="Choose a username"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  error={errors.username?.message}
+                  icon={<User size={18} color={Colors.outline} strokeWidth={1.5} />}
+                />
+              )}
             />
-            <Input
-              label="Email"
-              placeholder="your@email.com"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (errors.email) setErrors((e) => ({ ...e, email: undefined }));
-              }}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              error={errors.email}
-              icon={<Mail size={18} color={Colors.outline} strokeWidth={1.5} />}
+
+            <Controller
+              control={control}
+              name="email"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Email"
+                  placeholder="your@email.com"
+                  value={value}
+                  onChangeText={onChange}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  error={errors.email?.message}
+                  icon={<Mail size={18} color={Colors.outline} strokeWidth={1.5} />}
+                />
+              )}
             />
-            <Input
-              label="Password"
-              placeholder="Create a strong password"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errors.password) setErrors((e) => ({ ...e, password: undefined }));
-              }}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              error={errors.password}
-              icon={<Lock size={18} color={Colors.outline} strokeWidth={1.5} />}
-              rightIcon={
-                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-                  {showPassword ? (
-                    <EyeOff size={18} color={Colors.outline} strokeWidth={1.5} />
-                  ) : (
-                    <Eye size={18} color={Colors.outline} strokeWidth={1.5} />
-                  )}
-                </Pressable>
-              }
+
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Password"
+                  placeholder="Create a strong password"
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  error={errors.password?.message}
+                  icon={<Lock size={18} color={Colors.outline} strokeWidth={1.5} />}
+                  rightIcon={
+                    <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                      {showPassword ? (
+                        <EyeOff size={18} color={Colors.outline} strokeWidth={1.5} />
+                      ) : (
+                        <Eye size={18} color={Colors.outline} strokeWidth={1.5} />
+                      )}
+                    </Pressable>
+                  }
+                />
+              )}
             />
             <Text
               style={{
@@ -230,12 +243,38 @@ export default function RegisterScreen() {
             >
               Must be at least 8 characters with a symbol.
             </Text>
+
+            <Controller
+              control={control}
+              name="confirmPassword"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Confirm Password"
+                  placeholder="Retype your password"
+                  value={value}
+                  onChangeText={onChange}
+                  secureTextEntry={!showConfirmPassword}
+                  autoCapitalize="none"
+                  error={errors.confirmPassword?.message}
+                  icon={<Lock size={18} color={Colors.outline} strokeWidth={1.5} />}
+                  rightIcon={
+                    <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} hitSlop={8}>
+                      {showConfirmPassword ? (
+                        <EyeOff size={18} color={Colors.outline} strokeWidth={1.5} />
+                      ) : (
+                        <Eye size={18} color={Colors.outline} strokeWidth={1.5} />
+                      )}
+                    </Pressable>
+                  }
+                />
+              )}
+            />
           </View>
 
           <View style={{ marginTop: 24 }}>
             <Button
               title="Create Account"
-              onPress={handleRegister}
+              onPress={handleSubmit(handleRegister)}
               loading={isLoading}
               fullWidth
             />
