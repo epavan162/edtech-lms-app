@@ -92,7 +92,7 @@
 
 ### Installation
 ```bash
-git clone <repo-url>
+git clone https://github.com/epavan162/edtech-lms-app.git
 cd edtech-lms-app
 npm install
 ```
