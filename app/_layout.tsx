@@ -45,37 +45,22 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === '(auth)';
 
-    // Use setTimeout to ensure router is mounted (web compatibility)
-    const timer = setTimeout(() => {
-      if (!isAuthenticated && !inAuthGroup) {
-        router.replace('/(auth)/login');
-      } else if (isAuthenticated && inAuthGroup) {
-        router.replace('/(tabs)');
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
   }, [isAuthenticated, isInitialized, segments]);
 
-  if (!isInitialized) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: Colors.surface,
-        }}
-      >
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  // While we are waiting for the redirect to fire (even if it's instant in code), 
+  // returns null to stay on the Splash Screen (managed in the parent component)
+  if (!isInitialized) return null;
 
   return <Slot />;
 }
 
 function RootLayout() {
+  const { isInitialized } = useAuth();
   const [fontsLoaded] = useFonts({
     Manrope_400Regular,
     Manrope_500Medium,
@@ -86,11 +71,17 @@ function RootLayout() {
     Inter_600SemiBold,
   });
 
+  const isReady = fontsLoaded && isInitialized;
+
   useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync();
+    if (isReady) {
+      // Small buffer to ensure the first frame of the targeted screen is ready
+      const timer = setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 50);
+      return () => clearTimeout(timer);
     }
-  }, [fontsLoaded]);
+  }, [isReady]);
 
   useEffect(() => {
     // Request notification permissions and schedule inactivity reminder
