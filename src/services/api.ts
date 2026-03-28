@@ -5,7 +5,7 @@ import axios, {
 } from 'axios';
 import { storage } from '../utils/storage';
 
-const BASE_URL = 'https://api.freeapi.app';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://api.freeapi.app';
 const TIMEOUT = 15000;
 const MAX_RETRIES = 2;
 

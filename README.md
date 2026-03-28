@@ -82,10 +82,16 @@ npm install
 ```
 
 ### Environment Variables
-No environment variables needed — the app uses the public FreeAPI.app:
+The app uses environment variables for configuration. Rename `.env.example` to `.env` to get started:
+```bash
+cp .env.example .env
 ```
-API_BASE=https://api.freeapi.app
+
+Contents of `.env`:
+```env
+EXPO_PUBLIC_API_URL=https://api.freeapi.app
 ```
+*(Note: If no `.env` is provided, the app will safely fallback to the public `api.freeapi.app` URL to prevent crashes).*
 
 ### Run Development Server
 ```bash
