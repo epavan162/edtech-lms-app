@@ -99,7 +99,7 @@ export default function RegisterScreen() {
           {/* Hero */}
           <View style={{ marginBottom: 32 }}>
             <Image
-              source={require('../../assets/android-icon-foreground.png')}
+              source={require('../../assets/icon.png')}
               style={{
                 width: 64,
                 height: 64,

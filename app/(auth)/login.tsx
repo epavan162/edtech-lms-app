@@ -100,7 +100,7 @@ export default function LoginScreen() {
           {/* Hero Section */}
           <Animated.View style={{ alignItems: 'center', marginBottom: 48, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             <Image
-              source={require('../../assets/android-icon-foreground.png')}
+              source={require('../../assets/icon.png')}
               style={{
                 width: 80,
                 height: 80,
@@ -181,17 +181,6 @@ export default function LoginScreen() {
             />
           </Animated.View>
 
-          <Pressable style={{ alignSelf: 'flex-end', marginBottom: 32 }}>
-            <Text
-              style={{
-                fontFamily: 'Inter_500Medium',
-                fontSize: 13,
-                color: Colors.primary,
-              }}
-            >
-              Forgot Password?
-            </Text>
-          </Pressable>
 
           <View style={{ gap: 16 }}>
             <Button
