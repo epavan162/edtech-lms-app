@@ -73,9 +73,12 @@ export default function LoginScreen() {
       await login({ username: data.username.trim(), password: data.password });
       showToast('Welcome back! Signed in successfully.', 'success');
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
+      const axiosError = error as AxiosError<{ message?: string; errors?: any[] }>;
       const message =
-        axiosError.response?.data?.message ?? 'Login failed. Please try again.';
+        axiosError.response?.data?.message ?? 
+        (axiosError.response?.data?.errors && axiosError.response?.data?.errors.length > 0 
+          ? axiosError.response.data.errors[0] 
+          : 'Login failed. Please try again.');
       showToast(message, 'error');
     }
   };

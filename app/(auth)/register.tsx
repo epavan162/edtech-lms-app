@@ -57,9 +57,12 @@ export default function RegisterScreen() {
       // Navigate to login so user can sign in with new credentials
       router.replace('/(auth)/login');
     } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
+      const axiosError = error as AxiosError<{ message?: string; errors?: any[] }>;
       const message =
-        axiosError.response?.data?.message ?? 'Registration failed. Please try again.';
+        axiosError.response?.data?.message ?? 
+        (axiosError.response?.data?.errors && axiosError.response?.data?.errors.length > 0 
+          ? axiosError.response.data.errors[0] 
+          : 'Registration failed. Please try again.');
       showToast(message, 'error');
     }
   };

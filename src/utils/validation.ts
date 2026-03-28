@@ -1,18 +1,13 @@
 import { z } from 'zod';
 
-/** Login form validation schema */
+/** Login form validation schema - Relaxed for login */
 export const loginSchema = z.object({
   username: z
     .string()
-    .min(1, 'Username is required')
-    .min(3, 'Username must be at least 3 characters')
-    .max(50, 'Username is too long')
-    .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+    .min(1, 'Username is required'),
   password: z
     .string()
-    .min(1, 'Password is required')
-    .min(6, 'Password must be at least 6 characters')
-    .max(100, 'Password is too long'),
+    .min(1, 'Password is required'),
 });
 
 /** Register form validation schema */

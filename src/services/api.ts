@@ -59,8 +59,9 @@ api.interceptors.response.use(
       _retryCount?: number;
     };
 
-    // Handle 401 — Token Refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 — Token Refresh (only for non-login requests)
+    const isLoginRequest = originalRequest.url?.includes('/users/login');
+    if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest) {
       if (isRefreshing) {
         return new Promise<string>((resolve, reject) => {
           failedQueue.push({ resolve, reject });

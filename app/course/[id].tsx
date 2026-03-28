@@ -109,7 +109,7 @@ export default function CourseDetailScreen() {
   const handleShare = useCallback(async () => {
     try {
       const shareUrl = 'https://github.com/epavan162/edtech-lms-app/releases';
-      const message = `${course?.title}\n\n${course?.description}\n\nDownload the app here: ${shareUrl}`;
+      const message = `🚀 Just found this amazing course on The Atelier!\n\n📱 ${course?.title}: ${course?.description}\n\nYou should definitely check it out. Get the app here to start learning:\n👉 ${shareUrl}`;
       
       await Share.share({
         message,

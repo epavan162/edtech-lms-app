@@ -66,12 +66,8 @@ describe('Utils', () => {
       expect(loginSchema.safeParse({ username: '', password: '' }).success).toBe(false);
     });
 
-    it('rejects short username', () => {
-      expect(loginSchema.safeParse({ username: 'ab', password: 'pass123' }).success).toBe(false);
-    });
-
-    it('rejects invalid username chars', () => {
-      expect(loginSchema.safeParse({ username: 'user@name', password: 'pass123' }).success).toBe(false);
+    it('accepts short username and password on login', () => {
+      expect(loginSchema.safeParse({ username: 'a', password: '1' }).success).toBe(true);
     });
 
     it('validates correct register data', () => {
