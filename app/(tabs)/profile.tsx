@@ -105,9 +105,11 @@ export default function ProfileScreen() {
         const updatedUser = (apiResponse as any)?.data ?? apiResponse;
 
         if (user && updatedUser) {
+          // The FreeAPI might return the user with a nested avatar object
+          const newAvatar = updatedUser.avatar || updatedUser.user?.avatar || { url: asset.uri };
           updateUser({
             ...user,
-            avatar: updatedUser.avatar ?? { url: asset.uri },
+            avatar: newAvatar,
           });
         }
 
@@ -162,6 +164,7 @@ export default function ProfileScreen() {
         <View style={{ alignItems: 'center', paddingTop: 32, paddingBottom: 24 }}>
           <Pressable onPress={handleAvatarPick} style={{ position: 'relative' }} disabled={updatingAvatar}>
             <Image
+              key={getUserAvatarUrl(user)}
               source={{ uri: getUserAvatarUrl(user) }}
               style={{
                 width: 96,

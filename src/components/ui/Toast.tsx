@@ -122,7 +122,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <View style={styles.container} pointerEvents="box-none">
+      <View style={[styles.container, { pointerEvents: 'box-none' as any }]}>
         {toasts.map((toast) => (
           <ToastItem
             key={toast.id}
@@ -155,11 +155,21 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     width: '100%',
     gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 6,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        // @ts-ignore
+        boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+      },
+    }),
   },
   iconBadge: {
     width: 28,

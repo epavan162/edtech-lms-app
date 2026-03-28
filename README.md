@@ -16,7 +16,7 @@
 - Instructor data from `/api/v1/public/randomusers`
 - Pull-to-refresh, infinite scroll pagination
 - Full-text search with debounced filtering
-- Bookmark toggle with local persistence
+- Course name and description sharing with app download link
 - Enroll with visual feedback (spring animation)
 
 ### WebView Integration
@@ -31,12 +31,6 @@
 - Milestone notification at 5+ bookmarks
 - 24-hour inactivity reminder
 - Platform-guarded (skipped on web)
-
-### Biometric Authentication
-- Face ID / Fingerprint sign-in via `expo-local-authentication`
-- Credentials stored securely after first password login
-- Biometric availability check on app launch
-- Graceful fallback on web (biometric skipped)
 
 ### State Management & Persistence
 - Auth state with SecureStore / localStorage (cross-platform)
@@ -69,11 +63,10 @@
 | Navigation | Expo Router (file-based) |
 | Styling | Vanilla StyleSheet (Material Design 3 tokens) |
 | Secure Storage | Expo SecureStore + localStorage fallback |
-| App Data | AsyncStorage / MMKV |
+| App Data | AsyncStorage |
 | Images | Expo Image (with caching + blurhash) |
 | Forms | React Hook Form + Zod validation |
 | Notifications | Expo Notifications |
-| Biometrics | expo-local-authentication |
 | WebView | react-native-webview |
 | HTTP | Axios (interceptors, retry, timeout) |
 | Error Tracking | Sentry (`@sentry/react-native`) |
@@ -239,10 +232,11 @@ Form validation uses Zod schemas (`src/utils/validation.ts`) for type-safe, decl
 
 ## ⚠️ Known Issues / Limitations
 
-1. **Image CDN**: The FreeAPI's `cdn.dummyjson.com` URLs return 404. Fallback Unsplash images are used instead.
-2. **react-native-svg warning**: Installed v15.15.4 vs expected v15.15.3 (minor, non-breaking).
-3. **Token Refresh**: FreeAPI uses HTTP-only cookies for refresh tokens, which can't be accessed from the client. The app handles token expiry by redirecting to login.
-4. **Avatar Upload**: The PATCH endpoint works but avatar URLs from FreeAPI point to `localhost:8080`; the app gracefully falls back to local image URI.
+1. **Local Storage**: Bookmarks and enrolled courses are stored locally and are not synced across devices. In a production system, this would be handled via backend APIs.
+2. **Image CDN**: The FreeAPI's `cdn.dummyjson.com` URLs return 404. Fallback Unsplash images are used instead.
+3. **react-native-svg warning**: Installed v15.15.4 vs expected v15.15.3 (minor, non-breaking).
+4. **Token Refresh**: FreeAPI uses HTTP-only cookies for refresh tokens, which can't be accessed from the client. The app handles token expiry by redirecting to login.
+5. **Avatar Upload**: The PATCH endpoint works; the app handles backend loopback URLs (localhost) and ensures HTTPS/PNG compatibility for mobile rendering.
 
 ---
 

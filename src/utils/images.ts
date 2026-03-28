@@ -90,11 +90,12 @@ export function getCourseThumbnailUrl(
  * Overrides generic placeholder URLs with a custom ui-avatars.com fallback.
  */
 export function getUserAvatarUrl(user?: User | null): string {
-  const defaultFallback = `https://ui-avatars.com/api/?name=${user?.username || 'U'}&size=120&background=E2DFFF&color=3730A3&bold=true`;
+  // Mobile devices often misalign SVGs from ui-avatars, so we enforce format=png
+  const defaultFallback = `https://ui-avatars.com/api/?name=${user?.username || 'U'}&size=120&background=E2DFFF&color=3730A3&bold=true&format=png`;
   
   if (!user?.avatar?.url) return defaultFallback;
   
-  const url = user.avatar.url;
+  let url = user.avatar.url;
   // FreeAPI sometimes returns string placeholder links or dummy URLs for new users
   if (
     url.includes('via.placeholder.com') || 
@@ -103,6 +104,21 @@ export function getUserAvatarUrl(user?: User | null): string {
     url.trim() === ''
   ) {
     return defaultFallback;
+  }
+
+  // FreeAPI backend occasionally leaks local loopbacks from their docker image
+  url = url.replace(/http:\/\/(localhost|10\.0\.2\.2|127\.0\.0\.1)(:\d+)?/g, 'https://api.freeapi.app');
+
+  // Ensure returned URLs are absolute and explicitly use HTTPS for mobile
+  // Handle relative paths (with or without leading slash)
+  if (!url.startsWith('http') && !url.startsWith('file') && !url.startsWith('data')) {
+    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+    url = `https://api.freeapi.app${cleanPath}`;
+  }
+  
+  // Force HTTPS for any http:// links to bypass Android Cleartext policy
+  if (url.startsWith('http://')) {
+    url = url.replace('http://', 'https://');
   }
   
   return url;

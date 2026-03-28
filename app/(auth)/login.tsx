@@ -15,8 +15,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mail, Lock, Eye, EyeOff, Fingerprint } from 'lucide-react-native';
-import * as LocalAuthentication from 'expo-local-authentication';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Button } from '../../src/components/ui/Button';
@@ -36,7 +35,6 @@ export default function LoginScreen() {
   const { login, isLoading } = useAuth();
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
   const {
     control,
     handleSubmit,
@@ -68,21 +66,6 @@ export default function LoginScreen() {
     ]).start();
   }, []);
 
-  // Check biometric availability on mount
-  React.useEffect(() => {
-    const checkBiometric = async () => {
-      if (Platform.OS === 'web') return;
-      try {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        const hasCreds = await storage.getItem('bio_username');
-        setBiometricAvailable(hasHardware && isEnrolled && !!hasCreds);
-      } catch {
-        setBiometricAvailable(false);
-      }
-    };
-    checkBiometric();
-  }, []);
 
   const handleLogin = async (data: LoginFormValues) => {
     try {
@@ -96,38 +79,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleBiometricAuth = async () => {
-    try {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-      
-      if (!hasHardware || !isEnrolled) {
-        showToast('Biometrics not available or not enrolled on this device.', 'error');
-        return;
-      }
-
-      // Retrieve stored credentials from previous login
-      const savedUsername = await storage.getItem('bio_username');
-      const savedPassword = await storage.getItem('bio_password');
-
-      if (!savedUsername || !savedPassword) {
-        showToast('Please sign in with password first to enable biometrics.', 'info');
-        return;
-      }
-
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Sign in to The Atelier',
-        fallbackLabel: 'Use Password',
-      });
-
-      if (result.success) {
-        await login({ username: savedUsername, password: savedPassword });
-        showToast('Authenticated via Biometrics.', 'success');
-      }
-    } catch (err) {
-      showToast('Biometric authentication failed.', 'error');
-    }
-  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surface }}>
@@ -260,13 +211,6 @@ export default function LoginScreen() {
               onPress={handleSubmit(handleLogin)}
               loading={isLoading}
               fullWidth
-            />
-            <Button
-              title="Sign in with Biometrics"
-              onPress={handleBiometricAuth}
-              variant="outline"
-              fullWidth
-              icon={<Fingerprint size={18} color={Colors.primary} strokeWidth={1.5} />}
             />
           </View>
 

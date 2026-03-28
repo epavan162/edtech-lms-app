@@ -8,12 +8,12 @@ import {
   Alert,
   Animated,
   Platform,
+  Share,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { File, Paths, Directory } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import {
   ArrowLeft,
@@ -28,7 +28,6 @@ import {
   Infinity,
   Share2,
   Quote,
-  Download,
 } from 'lucide-react-native';
 import { courseService } from '../../src/services/courses';
 import { useCourseStore } from '../../src/store/courses';
@@ -107,43 +106,21 @@ export default function CourseDetailScreen() {
     showToast('Enrolled successfully! Start learning now.', 'success');
   }, [enrollCourse, courseId, enrollScale, showToast, course]);
 
-  const handleDownloadSyllabus = async () => {
+  const handleShare = useCallback(async () => {
     try {
-      showToast('Downloading course material...', 'info');
-
-      const thumbnailUrl = getCourseThumbnailUrl(courseId, course?.category, course?.images?.[0] || course?.thumbnail);
-
-      if (Platform.OS === 'web') {
-        // Web: use fetch + blob download
-        const response = await fetch(thumbnailUrl);
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `course-material-${courseId}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Download complete!', 'success');
-      } else {
-        // Native: use expo-file-system
-        const destination = new Directory(Paths.cache, 'downloads');
-        if (!destination.exists) {
-          destination.create();
-        }
-        const destFile = new File(destination, `course-material-${courseId}.jpg`);
-        const downloadedFile = await File.downloadFileAsync(thumbnailUrl, destFile);
-        showToast('Download complete!', 'success');
-
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(downloadedFile.uri);
-        }
-      }
-    } catch (error: any) {
-      showToast('Failed to download course material', 'error');
+      const shareUrl = 'https://github.com/epavan162/edtech-lms-app/releases';
+      const message = `${course?.title}\n\n${course?.description}\n\nDownload the app here: ${shareUrl}`;
+      
+      await Share.share({
+        message,
+        title: course?.title,
+        url: shareUrl, // iOS only
+      });
+      analytics.logEvent('course_share', { courseId, title: course?.title });
+    } catch (error) {
+      showToast('Could not open share menu', 'error');
     }
-  };
+  }, [course, courseId, showToast]);
 
   if (loading) {
     return (
@@ -229,6 +206,7 @@ export default function CourseDetailScreen() {
                 )}
               </Pressable>
               <Pressable
+                onPress={handleShare}
                 style={{
                   width: 40,
                   height: 40,
@@ -239,19 +217,6 @@ export default function CourseDetailScreen() {
                 }}
               >
                 <Share2 size={20} color={Colors.onSurface} strokeWidth={1.5} />
-              </Pressable>
-              <Pressable
-                onPress={handleDownloadSyllabus}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: 'rgba(255,255,255,0.9)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Download size={20} color={Colors.onSurface} strokeWidth={1.5} />
               </Pressable>
             </View>
           </View>

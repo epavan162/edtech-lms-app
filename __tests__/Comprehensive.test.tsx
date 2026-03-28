@@ -32,6 +32,25 @@ function containsText(json: any, text: string): boolean {
   return false;
 }
 
+// Silence noisy console warnings in tests
+if (typeof jest !== 'undefined') {
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  console.error = (...args) => {
+    const msg = args[0]?.toString() || '';
+    if (msg.includes('react-test-renderer is deprecated')) return;
+    if (msg.includes('act(...)')) return;
+    originalError(...args);
+  };
+  console.warn = (...args) => {
+    const msg = args[0]?.toString() || '';
+    if (msg.includes('shadow*')) return;
+    if (msg.includes('pointerEvents')) return;
+    if (msg.includes('Interpolation')) return;
+    originalWarn(...args);
+  };
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 1. UTILS
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -151,9 +170,17 @@ describe('Utils', () => {
     });
     it('returns ui-avatars for null user', () => {
       expect(getUserAvatarUrl(null)).toContain('ui-avatars');
+      expect(getUserAvatarUrl(null)).toContain('format=png');
     });
     it('returns real avatar URL', () => {
       expect(getUserAvatarUrl({ avatar: { url: 'https://real.com/pic.jpg' } })).toBe('https://real.com/pic.jpg');
+    });
+    it('enforces HTTPS for FreeAPI avatar URLs', () => {
+      expect(getUserAvatarUrl({ avatar: { url: 'http://api.freeapi.app/a.jpg' } })).toBe('https://api.freeapi.app/a.jpg');
+    });
+    it('sanitizes localhost/loopback URLs', () => {
+      expect(getUserAvatarUrl({ avatar: { url: 'http://localhost:8080/a.jpg' } })).toBe('https://api.freeapi.app/a.jpg');
+      expect(getUserAvatarUrl({ avatar: { url: 'http://127.0.0.1:8000/a.jpg' } })).toBe('https://api.freeapi.app/a.jpg');
     });
     it('returns fallback for placeholder avatar', () => {
       expect(getUserAvatarUrl({ avatar: { url: 'https://via.placeholder.com/150' } })).toContain('ui-avatars');
