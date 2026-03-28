@@ -11,12 +11,13 @@ import {
   Pressable,
   TouchableOpacity,
   Alert,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mail, Lock, Eye, EyeOff, Fingerprint } from 'lucide-react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
@@ -47,6 +48,25 @@ export default function LoginScreen() {
       password: '',
     },
   });
+
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(20)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
 
   // Check biometric availability on mount
   React.useEffect(() => {
@@ -126,7 +146,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Hero Section */}
-          <Animated.View entering={FadeInDown.duration(800).springify()} style={{ alignItems: 'center', marginBottom: 48 }}>
+          <Animated.View style={{ alignItems: 'center', marginBottom: 48, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             <LinearGradient
               colors={[Colors.primary, Colors.primaryContainer]}
               start={{ x: 0, y: 0 }}
@@ -177,7 +197,7 @@ export default function LoginScreen() {
           </Animated.View>
 
           {/* Form */}
-          <Animated.View entering={FadeInDown.delay(200).duration(800).springify()} style={{ gap: 16, marginBottom: 24 }}>
+          <Animated.View style={{ gap: 16, marginBottom: 24, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
             <Controller
               control={control}
               name="username"
