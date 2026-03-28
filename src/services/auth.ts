@@ -33,9 +33,26 @@ export const authService = {
   },
 
   updateAvatar: async (formData: FormData): Promise<UserResponse> => {
-    const { data } = await api.patch<UserResponse>('/api/v1/users/avatar', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+    // We use fetch instead of axios here because axios has known issues with FormData
+    // boundaries on React Native Android.
+    const { storage } = require('../utils/storage');
+    const token = await storage.getItem('accessToken');
+    
+    // @ts-ignore - FormData works correctly with fetch in RN
+    const response = await fetch('https://api.freeapi.app/api/v1/users/avatar', {
+      method: 'PATCH',
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
     });
+
+    if (!response.ok) {
+      throw new Error('Failed to update avatar');
+    }
+
+    const data = await response.json();
     return data;
   },
 };
