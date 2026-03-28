@@ -1,0 +1,83 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to create a GitHub Release and Tag
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Generate Native Android Project
+        run: npx expo prebuild --platform android --clean --no-install
+
+      - name: Grant execute permission for gradlew
+        working-directory: ./android
+        run: chmod +x gradlew
+
+      - name: Build Android Release APK
+        working-directory: ./android
+        run: ./gradlew assembleRelease --no-daemon --build-cache
+
+      - name: Rename APK
+        run: |
+          mv android/app/build/outputs/apk/release/app-release-unsigned.apk android/app/build/outputs/apk/release/edtech-lms-mobile.apk || mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/edtech-lms-mobile.apk
+
+      - name: Get Next Version Tag
+        id: next_version
+        run: |
+          # Fetch all tags so we can determine the latest version
+          git fetch --tags
+          LATEST_TAG=$(git tag -l "v0.*" | sort -V | tail -n1)
+          if [ -z "$LATEST_TAG" ]; then
+            NEXT_TAG="v0.1"
+          else
+            VERSION_NUM=$(echo $LATEST_TAG | sed 's/v0\.//')
+            NEXT_NUM=$((VERSION_NUM + 1))
+            NEXT_TAG="v0.$NEXT_NUM"
+          fi
+          echo "tag=$NEXT_TAG" >> $GITHUB_OUTPUT
+          echo "Determined next version: $NEXT_TAG"
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: edtech-lms-mobile
+          path: android/app/build/outputs/apk/release/edtech-lms-mobile.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.next_version.outputs.tag }}
+          name: Release ${{ steps.next_version.outputs.tag }}
+          body: 'Auto-generated Android APK from the latest push to the main branch.'
+          prerelease: false
+          files: android/app/build/outputs/apk/release/edtech-lms-mobile.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
