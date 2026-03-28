@@ -22,7 +22,7 @@ jobs:
           cache: 'npm'
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Run Tests with Coverage
         run: npx jest --coverage --coverageReporters=json-summary --coverageReporters=text 2>&1 | tee test-output.txt
@@ -76,7 +76,7 @@ jobs:
           cache: 'npm'
 
       - name: Install NPM Dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
