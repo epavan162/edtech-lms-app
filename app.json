@@ -42,7 +42,15 @@
           "color": "#3730A3"
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "newArchEnabled": false
+          }
+        }
+      ]
     ],
     "extra": {
       "router": {},
