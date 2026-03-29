@@ -98,46 +98,50 @@ To fulfill the assignment criteria, the app maps standard FreeAPI endpoints to L
 
 ## 📸 Screenshots & User Flow
 
-<p align="center">
-  <img src="https://img.shields.io/badge/-🔐%20Onboarding%20%26%20Core-29214D?style=for-the-badge" alt="Onboarding" />
-</p>
-<p align="center">
-  <img src="./assets/screenshots/1_login.png" width="250" hspace="20" vspace="15" alt="Login Screen" />
-  <img src="./assets/screenshots/2_register.png" width="250" hspace="20" vspace="15" alt="Register Screen" />
-  <img src="./assets/screenshots/3_home.png" width="250" hspace="20" vspace="15" alt="Home Dashboard" />
-</p>
-
----
-
-<p align="center">
-  <img src="https://img.shields.io/badge/-🎓%20Course%20Discovery-29214D?style=for-the-badge" alt="Discovery" />
-</p>
-<p align="center">
-  <img src="./assets/screenshots/4_explore.png" width="250" hspace="20" vspace="15" alt="Explore Catalog" />
-  <img src="./assets/screenshots/5_course_detail.png" width="250" hspace="20" vspace="15" alt="Course Details" />
-  <img src="./assets/screenshots/10_webview_content.png" width="250" hspace="20" vspace="15" alt="WebView Lessons" />
-</p>
-
----
-
-<p align="center">
-  <img src="https://img.shields.io/badge/-👤%20User%20Hub%20%26%20Engagement-29214D?style=for-the-badge" alt="User Hub" />
-</p>
-<p align="center">
-  <img src="./assets/screenshots/11_profile.png" width="250" hspace="20" vspace="15" alt="Profile Screen" />
-  <img src="./assets/screenshots/8_enrolled_courses.png" width="250" hspace="20" vspace="15" alt="My Courses" />
-  <img src="./assets/screenshots/7_bookmarks.png" width="250" hspace="20" vspace="15" alt="Bookmarks" />
-</p>
-
----
-
-<p align="center">
-  <img src="https://img.shields.io/badge/-🛡%EF%B8%8F%20Resilience%20%26%20Native-29214D?style=for-the-badge" alt="Resilience" />
-</p>
-<p align="center">
-  <img src="./assets/screenshots/9_offline_mode.png" width="250" hspace="20" vspace="15" alt="Offline Resilience" />
-  <img src="./assets/screenshots/12_notifications.png" width="250" hspace="20" vspace="15" alt="Native Notifications" />
-</p>
+<div align="center">
+  <table border="0" width="100%">
+    <tr>
+      <td bgcolor="#F8FAFF" align="center" style="border: none; padding: 40px; border-radius: 12px">
+        <br/>
+        <p align="center">
+          <img src="https://img.shields.io/badge/-🔐%20Onboarding%20%26%20Core-29214D?style=for-the-badge" alt="Onboarding" />
+        </p>
+        <p align="center">
+          <img src="./assets/screenshots/1_login.png" width="220" hspace="10" vspace="15" alt="Login Screen" />
+          <img src="./assets/screenshots/2_register.png" width="220" hspace="10" vspace="15" alt="Register Screen" />
+          <img src="./assets/screenshots/3_home.png" width="220" hspace="10" vspace="15" alt="Home Dashboard" />
+        </p>
+        <br/><hr style="opacity: 0.1"/><br/>
+        <p align="center">
+          <img src="https://img.shields.io/badge/-🎓%20Course%20Discovery-29214D?style=for-the-badge" alt="Discovery" />
+        </p>
+        <p align="center">
+          <img src="./assets/screenshots/4_explore.png" width="220" hspace="10" vspace="15" alt="Explore Catalog" />
+          <img src="./assets/screenshots/5_course_detail.png" width="220" hspace="10" vspace="15" alt="Course Details" />
+          <img src="./assets/screenshots/10_webview_content.png" width="220" hspace="10" vspace="15" alt="WebView Lessons" />
+        </p>
+        <br/><hr style="opacity: 0.1"/><br/>
+        <p align="center">
+          <img src="https://img.shields.io/badge/-👤%20User%20Hub%20%26%20Engagement-29214D?style=for-the-badge" alt="User Hub" />
+        </p>
+        <p align="center">
+          <img src="./assets/screenshots/11_profile.png" width="220" hspace="10" vspace="15" alt="Profile Screen" />
+          <img src="./assets/screenshots/8_enrolled_courses.png" width="220" hspace="10" vspace="15" alt="My Courses" />
+          <img src="./assets/screenshots/7_bookmarks.png" width="220" hspace="10" vspace="15" alt="Bookmarks" />
+        </p>
+        <br/><hr style="opacity: 0.1"/><br/>
+        <p align="center">
+          <img src="https://img.shields.io/badge/-🛡%EF%B8%8F%20Resilience%20%26%20Native-29214D?style=for-the-badge" alt="Resilience" />
+        </p>
+        <p align="center">
+          <img src="./assets/screenshots/9_offline_mode.png" width="220" hspace="10" vspace="15" alt="Offline Resilience" />
+          <img src="./assets/screenshots/12_notifications.png" width="220" hspace="10" vspace="15" alt="Native Notifications" />
+        </p>
+        <br/>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ---
 

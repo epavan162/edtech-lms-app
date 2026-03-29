@@ -35,8 +35,6 @@
       "expo-secure-store",
       "expo-image",
       "expo-font",
-      "expo-image-picker",
-      "expo-file-system",
       [
         "expo-notifications",
         {
