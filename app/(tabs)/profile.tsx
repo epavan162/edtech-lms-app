@@ -140,11 +140,6 @@ export default function ProfileScreen() {
       label: 'Bookmarks',
       value: bookmarks.length.toString(),
     },
-    {
-      icon: <Clock size={18} color={Colors.secondary} strokeWidth={1.5} />,
-      label: 'Hours',
-      value: `${enrollments.length * 4}`,
-    },
   ];
 
   const menuItems = [
@@ -214,6 +209,32 @@ export default function ProfileScreen() {
           >
             {user?.email ?? 'student@theatelier.edu'}
           </Text>
+          
+          <Pressable 
+            onPress={handleLogout}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              marginTop: 16,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              borderRadius: 20,
+              backgroundColor: pressed ? `${Colors.primary}20` : `${Colors.primary}10`,
+              borderWidth: 1,
+              borderColor: `${Colors.primary}20`,
+            })}
+          >
+            <LogOut size={14} color={Colors.primary} strokeWidth={2} />
+            <Text style={{ 
+              fontFamily: 'Inter_600SemiBold', 
+              fontSize: 13, 
+              color: Colors.primary,
+              letterSpacing: 0.2
+            }}>
+              Sign Out
+            </Text>
+          </Pressable>
         </View>
 
         {/* Stats */}
@@ -352,17 +373,6 @@ export default function ProfileScreen() {
           </LinearGradient>
         </View>
 
-        {/* Logout */}
-        <View style={{ paddingHorizontal: 24 }}>
-          <Button
-            title="Log Out"
-            onPress={handleLogout}
-            variant="outline"
-            loading={loggingOut}
-            fullWidth
-            icon={<LogOut size={16} color={Colors.primary} strokeWidth={1.5} />}
-          />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );

@@ -8,6 +8,7 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BookOpen, Bookmark, ArrowRight } from 'lucide-react-native';
 import { useCourseStore } from '../../src/store/courses';
 import { courseService } from '../../src/services/courses';
@@ -29,7 +30,6 @@ export default function CoursesScreen() {
   const [bookmarkedCourses, setBookmarkedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [recommendedCourses, setRecommendedCourses] = useState<Course[]>([]);
 
   const fetchCourseDetails = useCallback(async (ids: number[]) => {
     if (ids.length === 0) return [];
@@ -46,27 +46,59 @@ export default function CoursesScreen() {
   }, []);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
-    const [enrolled, bookmarked] = await Promise.all([
-      fetchCourseDetails(enrollments),
-      fetchCourseDetails(bookmarks),
-    ]);
-    setEnrolledCourses(enrolled);
-    setBookmarkedCourses(bookmarked);
-    
-    // Fetch recommendations if no enrollments
-    if (enrollments.length === 0) {
-      try {
-        const allCourses = await courseService.getCourses();
-        setRecommendedCourses(allCourses.data.data.slice(0, 3));
-      } catch (err) {
-        setRecommendedCourses([]);
+    try {
+      setLoading(true);
+      const [enrolled, bookmarked] = await Promise.all([
+        fetchCourseDetails(enrollments),
+        fetchCourseDetails(bookmarks),
+      ]);
+      
+      // Cache Protection: Only update state if we actually fetched something
+      // This prevents empty network results (due to offline) from clearing our UI
+      if (enrolled.length > 0) {
+        setEnrolledCourses(enrolled);
       }
+      if (bookmarked.length > 0) {
+        setBookmarkedCourses(bookmarked);
+      }
+      
+      // Cache the detail objects for offline use (only if we got new data)
+      if (enrolled.length > 0 || bookmarked.length > 0) {
+        await Promise.all([
+          AsyncStorage.setItem('@atelier_cached_enrolled_details', JSON.stringify(enrolled)),
+          AsyncStorage.setItem('@atelier_cached_bookmarked_details', JSON.stringify(bookmarked)),
+        ]);
+      }
+    } catch (err: any) {
+      if (err.message === 'Network Error' || !err.response) {
+        // We already loaded from cache on mount, so just warn that we couldn't refresh
+        // silently ignore or handle specifically if needed
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-    
-    setLoading(false);
-    setRefreshing(false);
-  }, [enrollments, bookmarks, fetchCourseDetails]);
+  }, [enrollments, bookmarks, fetchCourseDetails, enrolledCourses.length, bookmarkedCourses.length]);
+
+  // Initial load from cache
+  useEffect(() => {
+    const loadFromCache = async () => {
+      try {
+        const [cachedEnrolled, cachedBookmarked] = await Promise.all([
+          AsyncStorage.getItem('@atelier_cached_enrolled_details'),
+          AsyncStorage.getItem('@atelier_cached_bookmarked_details'),
+        ]);
+        if (cachedEnrolled) setEnrolledCourses(JSON.parse(cachedEnrolled));
+        if (cachedBookmarked) setBookmarkedCourses(JSON.parse(cachedBookmarked));
+        
+        // If we have cache, we can hide initial loader earlier
+        if (cachedEnrolled || cachedBookmarked) setLoading(false);
+      } catch {
+        // ...
+      }
+    };
+    loadFromCache();
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -252,56 +284,6 @@ export default function CoursesScreen() {
               }
             />
 
-            {/* Embedded AI Recommendations */}
-            {activeTab === 'enrolled' && recommendedCourses.length > 0 && (
-              <View style={{ marginTop: 32, paddingHorizontal: 24, paddingBottom: 32 }}>
-                <Text
-                  style={{
-                    fontFamily: 'Manrope_600SemiBold',
-                    fontSize: 20,
-                    color: Colors.onSurface,
-                    marginBottom: 16,
-                  }}
-                >
-                  Suggested for you ✨
-                </Text>
-                <View style={{ gap: 16 }}>
-                  {recommendedCourses.map((item) => (
-                    <Pressable
-                      key={`rec-${item.id}`}
-                      onPress={() => router.push(`/course/${item.id}`)}
-                      style={{
-                        backgroundColor: Colors.surfaceContainerLowest,
-                        borderRadius: 16,
-                        overflow: 'hidden',
-                        flexDirection: 'row',
-                        padding: 12,
-                        gap: 12,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.05,
-                        shadowRadius: 8,
-                        elevation: 2,
-                      }}
-                    >
-                      <Image
-                        source={{ uri: getCourseThumbnailUrl(item.id, item.category, item.thumbnail) }}
-                        style={{ width: 80, height: 80, borderRadius: 12 }}
-                        contentFit="cover"
-                      />
-                      <View style={{ flex: 1, justifyContent: 'center', gap: 4 }}>
-                        <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 14, color: Colors.onSurface }} numberOfLines={2}>
-                          {item.title}
-                        </Text>
-                        <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.onSurfaceVariant }} numberOfLines={1}>
-                          ${item.price} • ⭐ {item.rating?.toFixed(1) ?? 'N/A'}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            )}
           </View>
         }
         refreshControl={

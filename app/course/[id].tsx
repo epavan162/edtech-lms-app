@@ -20,17 +20,25 @@ import {
   Bookmark,
   BookmarkCheck,
   Star,
+  Share2,
+  ChevronLeft,
   Play,
-  Lock,
+  Clock,
+  BookOpen,
+  Award,
   Video,
   FileText,
-  Award,
   Infinity,
-  Share2,
+  Lock,
+  Sparkles,
+  CheckCircle2,
+  User,
+  BarChart,
   Quote,
 } from 'lucide-react-native';
-import { courseService } from '../../src/services/courses';
 import { useCourseStore } from '../../src/store/courses';
+import { courseService } from '../../src/services/courses';
+import { aiService, type AISummary } from '../../src/services/ai';
 import { notificationService } from '../../src/services/notifications';
 import { useToast } from '../../src/components/ui/Toast';
 import { Button } from '../../src/components/ui/Button';
@@ -40,6 +48,7 @@ import { getCourseImageUrl, getCourseThumbnailUrl } from '../../src/utils/images
 import { Colors } from '../../src/theme';
 import { analytics } from '../../src/services/analytics';
 import type { Course } from '../../src/types';
+import { OfflineErrorState } from '../../src/components/OfflineErrorState';
 
 const curriculum = [
   { title: 'Foundations of Intentional Design', duration: '12:45', preview: true },
@@ -56,13 +65,23 @@ const reviews = [
 export default function CourseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { isBookmarked, toggleBookmark, isEnrolled, enrollCourse, bookmarkCount } =
-    useCourseStore();
+  const { 
+    isBookmarked, 
+    toggleBookmark, 
+    isEnrolled, 
+    enrollCourse, 
+    bookmarkCount,
+    cachedCourses 
+  } = useCourseStore();
   const { showToast } = useToast();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [summary, setSummary] = useState<AISummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [isOfflineError, setIsOfflineError] = useState(false);
 
   const courseId = parseInt(id ?? '0', 10);
   const bookmarked = isBookmarked(courseId);
@@ -70,20 +89,60 @@ export default function CourseDetailScreen() {
 
   const enrollScale = useRef(new Animated.Value(1)).current;
 
+  const fetchCourse = useCallback(async () => {
+    try {
+      // 1. Optimistic Cache Lookup (Immediate UI)
+      const cached = cachedCourses.find(c => c.id === courseId);
+      if (cached) {
+        setCourse(cached);
+        setLoading(false); // Hide spinner immediately if we have cache
+      } else {
+        setLoading(true); // Only show spinner if we have NO cache
+      }
+
+      setIsOfflineError(false);
+
+      // 2. Network Fetch
+      const response = await courseService.getCourseById(courseId);
+      const courseData = response.data;
+      setCourse(courseData);
+      
+      // Auto-generate AI summary ONLY if we don't have one yet
+      if (!summary) {
+        setLoadingSummary(true);
+        const aiResponse = await aiService.generateSummary(
+          courseData.title,
+          courseData.description || ''
+        );
+        setSummary(aiResponse);
+      }
+    } catch (err: any) {
+      console.log('Course fetch failed:', err.message);
+      
+      // 3. Graceful Error Handling
+      const isNetworkError = err.message === 'Network Error' || !err.response;
+      
+      if (isNetworkError) {
+        if (course || cachedCourses.some(c => c.id === courseId)) {
+          // We have cached data showing/available, just warn
+          showToast('Offline: Viewing cached version', 'info');
+        } else {
+          // No data and no network = show offline state
+          setIsOfflineError(true);
+        }
+      } else {
+        showToast('Could not load course details', 'error');
+      }
+    } finally {
+      setLoading(false);
+      setLoadingSummary(false);
+    }
+  }, [courseId, cachedCourses, summary, showToast]); // Removed 'course' from dependencies
+
   useEffect(() => {
     analytics.logScreenView(`CourseDetail_${courseId}`);
-    const fetchCourse = async () => {
-      try {
-        const res = await courseService.getCourseById(courseId);
-        setCourse(res.data);
-      } catch {
-        showToast('Failed to load course details.', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCourse();
-  }, [courseId]);
+  }, [courseId, fetchCourse]);
 
   const handleBookmark = useCallback(async () => {
     await toggleBookmark(courseId);
@@ -133,6 +192,32 @@ export default function CourseDetailScreen() {
         }}
       >
         <ActivityIndicator size="large" color={Colors.primary} />
+      </SafeAreaView>
+    );
+  }
+
+  if (isOfflineError) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: Colors.surface }}>
+        <View style={{ padding: 16 }}>
+           <Pressable
+              onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: Colors.surfaceVariant,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ArrowLeft size={20} color={Colors.onSurface} strokeWidth={1.5} />
+            </Pressable>
+        </View>
+        <OfflineErrorState 
+          onRetry={fetchCourse} 
+          loading={loading}
+        />
       </SafeAreaView>
     );
   }
@@ -324,15 +409,79 @@ export default function CourseDetailScreen() {
           <Text
             style={{
               fontFamily: 'Inter_400Regular',
-              fontSize: 14,
-              lineHeight: 22,
+              fontSize: 15,
               color: Colors.onSurfaceVariant,
-              marginBottom: 24,
+              lineHeight: 24,
+              marginBottom: 28,
             }}
           >
-            {course.description ||
-              'Elevate your practice beyond the basics. This course dives deep into advanced techniques, teaching you how to curate experiences that feel intentional, premium, and human-centric.'}
+            {course.description}
           </Text>
+
+          {/* AI Smart Summary */}
+          <View style={{ marginBottom: 32 }}>
+            <LinearGradient
+              colors={[`${Colors.primary}15`, `${Colors.secondary}05`]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                borderRadius: 24,
+                padding: 20,
+                borderWidth: 1,
+                borderColor: `${Colors.primary}20`,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={16} color={Colors.onPrimary} fill={Colors.onPrimary} />
+                </View>
+                <Text style={{ fontFamily: 'Manrope_700Bold', fontSize: 16, color: Colors.primary }}>
+                  Atelier AI Insights
+                </Text>
+              </View>
+
+              {loadingSummary ? (
+                 <View style={{ gap: 12 }}>
+                   <View style={{ height: 16, width: '90%', backgroundColor: `${Colors.outline}20`, borderRadius: 8 }} />
+                   <View style={{ height: 16, width: '70%', backgroundColor: `${Colors.outline}20`, borderRadius: 8 }} />
+                 </View>
+              ) : summary ? (
+                <View style={{ gap: 16 }}>
+                  <View style={{ gap: 10 }}>
+                    {summary.takeaways.map((task, idx) => (
+                      <View key={idx} style={{ flexDirection: 'row', gap: 10 }}>
+                        <CheckCircle2 size={16} color={Colors.primary} style={{ marginTop: 2 }} />
+                        <Text style={{ flex: 1, fontFamily: 'Inter_400Regular', fontSize: 14, color: Colors.onSurface, lineHeight: 20 }}>
+                          {task}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                  
+                  <View style={{ height: 1, backgroundColor: `${Colors.outline}10` }} />
+                  
+                  <View style={{ flexDirection: 'row', gap: 16 }}>
+                    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <User size={14} color={Colors.onSurfaceVariant} strokeWidth={1.5} />
+                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: Colors.onSurfaceVariant }} numberOfLines={1}>
+                        {summary.audience}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <BarChart size={14} color={Colors.onSurfaceVariant} strokeWidth={1.5} />
+                      <Text style={{ fontFamily: 'Inter_500Medium', fontSize: 12, color: Colors.onSurfaceVariant }}>
+                        {summary.difficulty}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <Text style={{ fontFamily: 'Inter_400Regular', fontSize: 13, color: Colors.onSurfaceVariant }}>
+                  AI insights are currently unavailable.
+                </Text>
+              )}
+            </LinearGradient>
+          </View>
 
           {/* Includes */}
           <View style={{ marginBottom: 28 }}>

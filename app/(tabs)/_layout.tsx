@@ -6,18 +6,19 @@ import { Colors } from '../../src/theme';
 import { OfflineBanner } from '../../src/components/OfflineBanner';
 
 export default function TabsLayout() {
+  const TAB_BAR_HEIGHT = Platform.OS === 'ios' ? 88 : 72;
+
   return (
     <>
-      <OfflineBanner />
       <Tabs
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
             backgroundColor: Colors.surfaceContainerLowest,
             borderTopWidth: 0,
-            height: Platform.OS === 'ios' ? 88 : 64,
+            height: TAB_BAR_HEIGHT,
             paddingTop: 8,
-            paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+            paddingBottom: Platform.OS === 'ios' ? 28 : 12,
             elevation: 0,
             shadowColor: Colors.onSurface,
             shadowOffset: { width: 0, height: -4 },
@@ -61,6 +62,7 @@ export default function TabsLayout() {
           }}
         />
       </Tabs>
+      <OfflineBanner position="bottom" offset={TAB_BAR_HEIGHT} />
     </>
   );
 }

@@ -23,6 +23,7 @@ import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { ToastProvider } from '../src/components/ui/Toast';
 import { notificationService } from '../src/services/notifications';
 import { Colors } from '../src/theme';
+import { OfflineBanner } from '../src/components/OfflineBanner';
 import * as Sentry from '@sentry/react-native';
 import { initializeSentry } from '../src/services/sentry';
 import { analytics } from '../src/services/analytics';
@@ -82,7 +83,11 @@ function RootLayoutNav({ fontsLoaded }: { fontsLoaded: boolean }) {
     );
   }
 
-  return <Slot />;
+  return (
+    <>
+      <Slot />
+    </>
+  );
 }
 
 function RootLayout() {

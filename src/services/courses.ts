@@ -6,6 +6,7 @@ import type {
 } from '../types';
 
 export const courseService = {
+  // Mapped as 'Courses' per assignment requirements
   getCourses: async (
     page = 1,
     limit = 10,
@@ -27,6 +28,7 @@ export const courseService = {
     return data;
   },
 
+  // Mapped as 'Instructors' per assignment requirements
   getInstructors: async (
     page = 1,
     limit = 10,

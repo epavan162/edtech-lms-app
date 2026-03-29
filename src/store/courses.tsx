@@ -8,11 +8,13 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './auth';
+import { notificationService } from '../services/notifications';
 
 /**
  * Per-user course store.
  * Bookmarks and enrollments are scoped by user ID so each user
  * has their own independent data that persists across sessions.
+ * Also handles global caching for course lists to support offline mode.
  */
 
 function getUserKey(userId: string | undefined, suffix: string): string {
@@ -28,6 +30,9 @@ interface CourseStoreContextType {
   toggleBookmark: (courseId: number) => Promise<void>;
   enrollCourse: (courseId: number) => Promise<void>;
   bookmarkCount: number;
+  cachedCourses: any[];
+  cachedInstructors: any[];
+  saveCoursesToCache: (courses: any[], instructors: any[]) => Promise<void>;
 }
 
 const CourseStoreContext = createContext<CourseStoreContextType | undefined>(
@@ -38,33 +43,41 @@ export function CourseStoreProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [bookmarks, setBookmarks] = useState<number[]>([]);
   const [enrollments, setEnrollments] = useState<number[]>([]);
+  const [cachedCourses, setCachedCourses] = useState<any[]>([]);
+  const [cachedInstructors, setCachedInstructors] = useState<any[]>([]);
 
   const userId = user?._id;
 
-  // Load per-user data from AsyncStorage when user changes
+  // Load per-user data and global cache from AsyncStorage when user changes
   useEffect(() => {
     if (!isAuthenticated || !userId) {
-      // Clear state when logged out
+      // Clear personal state when logged out, but keep global cache
       setBookmarks([]);
       setEnrollments([]);
       return;
     }
 
-    const loadData = async () => {
+    async function loadData() {
       try {
-        const [savedBookmarks, savedEnrollments] = await Promise.all([
+        const [savedBookmarks, savedEnrollments, savedCourses, savedInstructors] = await Promise.all([
           AsyncStorage.getItem(getUserKey(userId, 'bookmarks')),
           AsyncStorage.getItem(getUserKey(userId, 'enrollments')),
+          AsyncStorage.getItem('@atelier_global_courses'),
+          AsyncStorage.getItem('@atelier_global_instructors'),
         ]);
+
         if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
         else setBookmarks([]);
+
         if (savedEnrollments) setEnrollments(JSON.parse(savedEnrollments));
         else setEnrollments([]);
-      } catch {
-        setBookmarks([]);
-        setEnrollments([]);
+
+        if (savedCourses) setCachedCourses(JSON.parse(savedCourses));
+        if (savedInstructors) setCachedInstructors(JSON.parse(savedInstructors));
+      } catch (err) {
+        console.error('Failed to load course cache:', err);
       }
-    };
+    }
     loadData();
   }, [userId, isAuthenticated]);
 
@@ -88,6 +101,11 @@ export function CourseStoreProvider({ children }: { children: ReactNode }) {
         getUserKey(userId, 'bookmarks'),
         JSON.stringify(updated),
       );
+      
+      // Trigger milestone notification if 5+ bookmarks
+      if (updated.length >= 5) {
+        notificationService.sendBookmarkMilestone(updated.length);
+      }
     },
     [bookmarks, userId],
   );
@@ -105,6 +123,19 @@ export function CourseStoreProvider({ children }: { children: ReactNode }) {
     [enrollments, userId],
   );
 
+  const saveCoursesToCache = useCallback(async (courses: any[], instructors: any[]) => {
+    setCachedCourses(courses);
+    setCachedInstructors(instructors);
+    try {
+      await Promise.all([
+        AsyncStorage.setItem('@atelier_global_courses', JSON.stringify(courses)),
+        AsyncStorage.setItem('@atelier_global_instructors', JSON.stringify(instructors)),
+      ]);
+    } catch {
+      // Ignore cache persistence errors
+    }
+  }, []);
+
   return (
     <CourseStoreContext.Provider
       value={{
@@ -115,6 +146,9 @@ export function CourseStoreProvider({ children }: { children: ReactNode }) {
         toggleBookmark,
         enrollCourse,
         bookmarkCount: bookmarks.length,
+        cachedCourses,
+        cachedInstructors,
+        saveCoursesToCache,
       }}
     >
       {children}

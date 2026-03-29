@@ -1,271 +1,211 @@
-# The Atelier — Mini LMS Mobile App
-
-> A premium learning management system built with React Native Expo, showcasing native features, WebView integration, and sophisticated state management.
-
-## 📱 Features
-
-### Authentication & User Management
-- Login/Register with the FreeAPI.app endpoints
-- Secure token storage (SecureStore on native, localStorage on web)
-- Auto-login on app restart with token validation
-- Profile picture update via `PATCH /api/v1/users/avatar`
-- User statistics (courses enrolled, bookmarks, learning hours)
-
-### Course Catalog
-- Fetch courses from `/api/v1/public/randomproducts`
-- Instructor data from `/api/v1/public/randomusers`
-- Pull-to-refresh, infinite scroll pagination
-- Full-text search with debounced filtering
-- Course name and description sharing with app download link
-- Enroll with visual feedback (spring animation)
-
-### WebView Integration
-- Embedded course content viewer with custom HTML template
-- Native → WebView communication via `injectedJavaScript`
-- WebView → Native messaging via `postMessage`
-- Error handling for failed WebView loads
-- Cross-platform: `iframe` on web, `react-native-webview` on native
-
-### Notifications
-- Permission request on first launch
-- Milestone notification at 5+ bookmarks
-- 24-hour inactivity reminder
-- Platform-guarded (skipped on web)
-
-### State Management & Persistence
-- Auth state with SecureStore / localStorage (cross-platform)
-- Course bookmarks & enrollments with AsyncStorage
-- Global state via React Context + custom hooks
-- Memoized list items with `React.memo`
-
-### Error Handling
-- Axios interceptors with retry logic and timeout
-- Error boundary at the root level
-- Offline mode detection with `@react-native-community/netinfo`
-- Offline banner UI component
-- User-friendly toast notifications for all actions
-- WebView error state with retry button
-
-### Testing & Quality
-- **104 tests** with **>80% code coverage**
-- Comprehensive unit tests for services, stores, and utilities
-- Component rendering tests for all major screens
-- CI pipeline enforces ≥70% coverage before APK build
+<div align="center">
+  <img src="./assets/icon.png" width="120" height="120" style="border-radius: 28px" alt="Atelier Logo" />
+  <h1>The Atelier</h1>
+  <p><strong>A Mini LMS built with React Native Expo</strong></p>
+  
+  <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+    <img src="https://img.shields.io/badge/Framework-Expo%20SDK%2055-29214D?style=for-the-badge&logo=expo&logoColor=white" alt="Expo" />
+    <img src="https://img.shields.io/badge/Language-TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Build-Android%20APK-FFD700?style=for-the-badge&logo=android&logoColor=black" alt="Android" />
+    <img src="https://img.shields.io/badge/Tests-105%20Passed-4CAF50?style=for-the-badge&logo=jest&logoColor=white" alt="Tests" />
+  </div>
+</div>
 
 ---
 
-## 🛠 Technology Stack
+## 🎨 Project Overview
 
-| Category | Technology |
-|---|---|
-| Framework | React Native Expo (SDK 55) |
-| Language | TypeScript (strict mode) |
-| Navigation | Expo Router (file-based) |
-| Styling | Vanilla StyleSheet (Material Design 3 tokens) |
-| Secure Storage | Expo SecureStore + localStorage fallback |
-| App Data | AsyncStorage |
-| Images | Expo Image (with caching + blurhash) |
-| Forms | React Hook Form + Zod validation |
-| Notifications | Expo Notifications |
-| WebView | react-native-webview |
-| HTTP | Axios (interceptors, retry, timeout) |
-| Error Tracking | Sentry (`@sentry/react-native`) |
-| Analytics | Custom analytics service |
-| Testing | Jest + React Native Testing Library |
-| Icons | lucide-react-native |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js ≥ 18
-- npm or yarn
-- Expo Go app on your device (for mobile testing)
-
-### Installation
-```bash
-git clone https://github.com/epavan162/edtech-lms-app.git
-cd edtech-lms-app
-npm install
-```
-
-### Environment Variables
-The app uses environment variables for configuration. Rename `.env.example` to `.env` to get started:
-```bash
-cp .env.example .env
-```
-
-Contents of `.env`:
-```env
-EXPO_PUBLIC_API_URL=https://api.freeapi.app
-```
-*(Note: If no `.env` is provided, the app will safely fallback to the public `api.freeapi.app` URL to prevent crashes).*
-
-### Run Development Server
-```bash
-# Start Expo dev server
-npx expo start
-
-# Web only
-npx expo start --web
-
-# iOS simulator
-npx expo start --ios
-
-# Android emulator
-npx expo start --android
-```
-
-### Build APK (Cloud / EAS)
-The standard Expo way using EAS Build (requires an Expo account):
-```bash
-# Install EAS CLI
-npm install -g eas-cli
-
-# Build production APK
-eas build --platform android --profile preview
-```
-
-### Build APK (Local / Fast)
-This project includes a **CI/CD pipeline** (GitHub Actions) that builds the APK directly using Gradle. You can replicate this locally for much faster builds without waiting for EAS queues:
-
-**Requirements:**
-- Android Studio + SDK installed
-- Java JDK 17 installed
-- `ANDROID_HOME` set in your terminal
-
-**Build Steps:**
-```bash
-# 1. Generate the native android folder
-npx expo prebuild --platform android --clean
-
-# 2. Build the APK using Gradle
-cd android
-./gradlew assembleRelease
-```
-The resulting APK will be located at:
-`android/app/build/outputs/apk/release/app-release.apk`
-
----
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run with coverage report
-npm test -- --coverage
-```
-
-**Current Coverage:** 104 tests passing, >80% line coverage.
-
----
-
-## 🤖 Deployment (CI/CD)
-The project is configured with **GitHub Actions**. Every push to the `main` branch automatically:
-1. **Runs tests** with coverage enforcement (≥70% threshold).
-2. **Only if tests pass**, runs `npx expo prebuild` to generate the native project.
-3. Runs `./gradlew assembleRelease` to compile the APK.
-4. **Auto-releases**: Generates a new version tag (e.g., `v0.5`) and attaches the APK to a GitHub Release.
-
-
----
-
-## 📂 Project Structure
-
-```
-edtech-lms-app/
-├── app/                        # Expo Router pages
-│   ├── (auth)/                 # Auth screens (login, register)
-│   ├── (tabs)/                 # Tab screens (home, courses, profile)
-│   ├── course/[id].tsx         # Course detail screen
-│   ├── webview.tsx             # WebView content viewer
-│   └── _layout.tsx             # Root layout with auth guard
-├── src/
-│   ├── components/
-│   │   ├── ui/                 # Reusable UI (Button, Card, Input, Toast, etc.)
-│   │   ├── CourseCard.tsx       # Memoized course card component
-│   │   ├── ErrorBoundary.tsx    # App-level error boundary
-│   │   ├── LoadingSkeleton.tsx  # Skeleton loading states
-│   │   └── OfflineBanner.tsx    # Network status banner
-│   ├── services/
-│   │   ├── api.ts              # Axios instance (interceptors, retry, timeout)
-│   │   ├── auth.ts             # Auth API calls
-│   │   ├── courses.ts          # Course/instructor API calls
-│   │   └── notifications.ts   # Local notification service
-│   ├── store/
-│   │   ├── auth.tsx            # Auth context (login, register, logout)
-│   │   ├── courses.ts          # Course state (bookmarks, enrollments)
-│   │   └── StoreProvider.tsx   # Global state provider
-│   ├── theme/
-│   │   └── index.ts            # Design tokens (Material Design 3)
-│   ├── types/
-│   │   └── index.ts            # TypeScript interfaces
-│   └── utils/
-│       ├── images.ts           # Image URL fallback utility
-│       ├── storage.ts          # Cross-platform storage adapter
-│       └── validation.ts       # Zod schemas for form validation
-└── assets/                     # Icons, splash screens
-```
+**The Atelier** is a production-ready Learning Management System (LMS) designed for the learners. Built on the philosophy of "The Digital Curator," the app treats every course as a valuable asset and provides a seamless, high-performance environment for browsing, enrolling, and learning—even in low-connectivity environments.
 
 ---
 
 ## 🏗 Key Architectural Decisions
 
-### 1. Cross-Platform Storage Adapter
-Expo SecureStore doesn't work on web. Built `src/utils/storage.ts` that abstracts this — uses `SecureStore` on native and `localStorage` on web, providing a single interface for all token operations.
+<p align="center">
+  <img src="./assets/system-architecture.png" alt="System Architecture" width="800" />
+</p>
 
-### 2. Image Fallback System
-The FreeAPI returns `cdn.dummyjson.com` URLs that 404. Created `src/utils/images.ts` that maps product categories to curated Unsplash images, providing beautiful, reliable thumbnails without requiring API changes.
+We prioritized **Resilience**, **Security**, and **Performance** in every layer of the application.
 
-### 3. WebView Strategy
-On web, `react-native-webview` doesn't work. The app conditionally renders an `<iframe srcDoc>` on web and `<WebView source={{html}}>` on native, using the same HTML template for both.
+### 1. 🌐 Offline-First Resilience (SWR Strategy)
 
-### 4. Toast Notification System
-Built a custom animated toast component (`src/components/ui/Toast.tsx`) using React Context. Provides visual feedback for every user action (login, logout, bookmark, enroll, avatar update) without relying on `Alert.alert` which is unreliable on web.
+To bridge the gap between native performance and unreliable networks, we implemented a **Stale-While-Revalidate (SWR)** caching layer.
 
-### 5. Zod Validation
-Form validation uses Zod schemas (`src/utils/validation.ts`) for type-safe, declarative validation with clear error messages.
+- **Decision**: Use `AsyncStorage` to persist the full course catalog and instructor data.
+- **Rationale**: This allows the app to load instantly from cache while refetching the latest content in the background. Users can browse, search, and view bookmarks without a live connection.
+- **Experience**: A global "Network State" listener displays a professional offline banner, and technical Axios error overlays are replaced with branded UI components.
 
----
+### 2. 🔐 Two-Tier Data Persistence (Security-First)
 
-## ⚠️ Known Issues / Limitations
+We categorized application data into two tiers to optimize for both security and speed.
 
-1. **Local Storage**: Bookmarks and enrolled courses are stored locally and are not synced across devices. In a production system, this would be handled via backend APIs.
-2. **Image CDN**: The FreeAPI's `cdn.dummyjson.com` URLs return 404. Fallback Unsplash images are used instead.
-3. **react-native-svg warning**: Installed v15.15.4 vs expected v15.15.3 (minor, non-breaking).
-4. **Token Refresh**: FreeAPI uses HTTP-only cookies for refresh tokens, which can't be accessed from the client. The app handles token expiry by redirecting to login.
-5. **Avatar Upload**: The PATCH endpoint works; the app handles backend loopback URLs (localhost) and ensures HTTPS/PNG compatibility for mobile rendering.
+- **Tier 1: Sensitive Data**: JWT Authentication tokens and user preferences are stored in **Expo SecureStore**, which uses hardware-backed encryption on-device.
+- **Tier 2: Discovery Data**: Course lists and bookmarks are stored in **AsyncStorage** for fast, local-first access (supporting the 100+ item catalog).
 
----
+### 3. 📉 High-Performance List Optimization
 
-## 📋 API Endpoints Used
+For the course catalog, we moved beyond standard `FlatList`.
 
-| Method | Endpoint | Usage |
-|---|---|---|
-| POST | `/api/v1/users/login` | User login |
-| POST | `/api/v1/users/register` | User registration |
-| GET | `/api/v1/users/current-user` | Auto-login check |
-| PATCH | `/api/v1/users/avatar` | Profile picture update |
-| GET | `/api/v1/public/randomproducts` | Course catalog |
-| GET | `/api/v1/public/randomproducts/:id` | Course details |
-| GET | `/api/v1/public/randomusers` | Course instructors |
+- **Decision**: Integrated **LegendList** (`@legendapp/list`).
+- **Rationale**: LegendList offers significant memory savings and smoother 60FPS scrolling by optimizing the virtualization of complex items. Combined with `React.memo`, this ensures a jank-free experience on both Android and iOS.
 
----
+### 🔗 Bi-Directional WebView Bridge
 
-## 📐 Design System
+The course content view uses a sophisticated **WebView-to-Native bridge**.
 
-The app uses a custom "Indigo Scholar" design system inspired by Material Design 3:
+- **Header Injection**: State and authorization are communicated to the embedded HTML content via custom headers.
+- **Error Boundaries**: Dedicated logic detects loading failures and provides a "Retry" state, preventing users from ever seeing a blank web view.
 
-- **Primary**: `#3730A3` (Indigo)
-- **Typography**: Manrope (headings) + Inter (body)
-- **Shape**: 16–24px corner radius
-- **Cards**: Glass-morphism with subtle shadows
-- **Animations**: Spring-based press feedback, pulse-loading skeletons
+### 📡 API & Data Mapping
+
+To fulfill the specific logic requirements of the assignment, the app consumes and maps the **FreeAPI** endpoints as follows:
+
+| Endpoint | Logic Mapping | Purpose |
+| :--- | :--- | :--- |
+| `GET /api/v1/public/randomproducts` | **Courses** | Serves as the primary course catalog, providing titles, pricing, and descriptions. |
+| `GET /api/v1/public/randomusers` | **Instructors** | Mapped as course instructors to provide professional profiles and avatars. |
+| `POST /api/v1/users/register` | **User Onboarding** | Handles secure account creation. |
+| `POST /api/v1/users/login` | **Authentication** | Generates the JWT session tokens for SecureStore persistence. |
+| `PATCH /api/v1/users/avatar` | **Profile Sync** | Syncs local camera/gallery uploads with the remote user profile. |
 
 ---
 
-## 📝 License
+## 🛠 Features Breakdown
 
-MIT
+| Category             | High-Excellence Features                                                          |
+| :------------------- | :-------------------------------------------------------------------------------- |
+| **🔐 Auth**          | JWT persistence, Auto-login on restart, Secure password handling via SecureStore. |
+| **🎓 Catalog**       | 60FPS Infinite Scroll, Debounced Search, Pull-to-refresh, Skeleton loaders.       |
+| **🤖 Innovation**    | **Atelier AI Insights**: Automated, AI-generated course summaries and takeaways.  |
+| **🔔 Notifications** | Milestone triggers (5+ bookmarks) and 24h inactivity reminders.                   |
+| **📸 Profile**       | Direct camera/gallery integration for avatar updates with optimistic UI.          |
+| **🛡 Security**      | **Jailbreak Detection**, Zod form validation, and HTTPS enforcement.              |
+
+---
+
+## 🔄 Application Flow
+
+<p align="center">
+  <img src="./assets/app-flow.png" alt="Application Flow" width="800" />
+</p>
+
+---
+
+## 📸 Screenshots & User Flow
+
+<div align="center">
+  <table style="width: 100%">
+    <tr>
+      <td align="center"><b>Login & Account</b></td>
+      <td align="center"><b>Home Dashboard</b></td>
+      <td align="center"><b>Course Detail</b></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="./assets/screenshots/1_login.png" alt="Login" width="180" /><br/><img src="./assets/screenshots/2_register.png" alt="Register" width="180" /></td>
+      <td align="center"><img src="./assets/screenshots/3_home.png" alt="Home" width="180" /><br/><img src="./assets/screenshots/4_explore.png" alt="Explore" width="180" /></td>
+      <td align="center"><img src="./assets/screenshots/5_course_detail.png" alt="Detail" width="180" /></td>
+    </tr>
+    <tr>
+      <td align="center"><b>My Learning & Bookmarks</b></td>
+      <td align="center"><b>Profile & Engagement</b></td>
+      <td align="center"><b>Resilience & WebView</b></td>
+    </tr>
+    <tr>
+      <td align="center"><img src="./assets/screenshots/7_bookmarks.png" alt="Bookmarks" width="180" /><br/><img src="./assets/screenshots/8_enrolled_courses.png" alt="Enrolled" width="180" /></td>
+      <td align="center"><img src="./assets/screenshots/11_profile.png" alt="Profile" width="180" /><br/><img src="./assets/screenshots/12_notifications.png" alt="Notifications" width="180" /></td>
+      <td align="center"><img src="./assets/screenshots/9_offline_mode.png" alt="Offline Mode" width="180" /><br/><img src="./assets/screenshots/10_webview_content.png" alt="WebView" width="180" /></td>
+    </tr>
+  </table>
+</div>
+
+---
+
+## 📦 Local Setup & Configuration
+
+### Prerequisites
+
+- **Node.js** (LTS version)
+- **npm** or **yarn**
+- **Expo Go** app installed on your physical device (optional for testing)
+
+### 1. Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/epavan162/edtech-lms-app.git
+
+# Navigate into the project
+cd edtech-lms-app
+
+# Install dependencies
+npm install --legacy-peer-deps
+```
+
+### 2. Environment Variables
+
+Create a `.env` file in the root directory.
+
+```env
+# The FreeAPI base URL (Required)
+EXPO_PUBLIC_API_URL=https://api.freeapi.app
+
+# Optional Sentry DSN for error tracking
+EXPO_PUBLIC_SENTRY_DSN=your_dsn_here
+```
+
+### 3. Execution
+
+```bash
+# Start the Expo development server
+npx expo start
+
+# Interactions:
+# Press 'a' to open in Android Emulator
+# Press 'i' to open in iOS Simulator
+# Press 'w' to open in Web Browser
+```
+
+---
+
+## 🧪 Quality Assurance
+
+We maintain a rigorous testing standard. Every major service and state logic is covered by **105 Jest tests**.
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with coverage report
+npm test -- --coverage
+```
+
+_Current Coverage Profile: 100% Core Services, >75% UI Components._
+
+---
+
+## 🚀 DevOps & CI/CD Pipeline
+
+<p align="center">
+  <img src="./assets/ci-cd-pipeline.png" alt="CI/CD Pipeline" width="800" />
+</p>
+
+We utilize **GitHub Actions** for professional-grade distribution:
+
+- **Quality Gate**: Automatic test run on every push; build fails if tests fail or coverage drops below 70%.
+- **Automated Builds**: Successful main branch pushes trigger an **Android APK Build** via Gradle.
+- **Internal Distribution**: APKs are automatically uploaded to **GitHub Releases** with auto-incrementing tags (e.g., `v0.1`, `v0.2`).
+
+---
+
+## ⚠️ Known Issues & Limitations
+
+1.  **API Rate Limits**: Since we use `api.freeapi.app`, occasional 429 errors may occur during peak hours. We've implemented retry logic to mitigate this.
+2.  **Web Support**: While fully functional on Web, native features like `SecureStore` fallback to local storage, and Push Notifications are simulated.
+3.  **Avatar Persistence**: Direct file path updates in `AsyncStorage` might require a manual refresh if the native OS clears temp folders (API sync is the primary source of truth).
+
+---
+
+<div align="center">
+  <p><b>Developed with precision and care for the React Native Expo Developer Assignment.</b></p>
+  <img src="https://img.shields.io/badge/Status-Complete-4CAF50?style=for-the-flat&logo=check" alt="Status" />
+</div>

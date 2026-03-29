@@ -28,11 +28,18 @@ import { LegendList } from '@legendapp/list';
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isBookmarked, toggleBookmark, bookmarkCount } = useCourseStore();
+  const { 
+    isBookmarked, 
+    toggleBookmark, 
+    bookmarkCount, 
+    cachedCourses, 
+    cachedInstructors, 
+    saveCoursesToCache 
+  } = useCourseStore();
 
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [courses, setCourses] = useState<Course[]>(cachedCourses);
+  const [instructors, setInstructors] = useState<Instructor[]>(cachedInstructors);
+  const [loading, setLoading] = useState(cachedCourses.length === 0);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchActive, setSearchActive] = useState(false);
@@ -53,18 +60,28 @@ export default function HomeScreen() {
         ]);
 
         const newCourses = coursesRes.data.data;
+        const newInstructors = instructorsRes?.data.data ?? instructors;
+
         if (pageNum === 1) {
           setCourses(newCourses);
+          if (!query) {
+            saveCoursesToCache(newCourses, newInstructors);
+          }
         } else {
           setCourses((prev) => [...prev, ...newCourses]);
         }
         setHasMore(coursesRes.data.nextPage);
 
         if (instructorsRes) {
-          setInstructors(instructorsRes.data.data);
+          setInstructors(newInstructors);
         }
-      } catch (err) {
-        setError('Failed to load courses. Pull down to retry.');
+      } catch (err: any) {
+        const isNetworkError = err.message === 'Network Error' || !err.response;
+        if (isNetworkError) {
+          setError('Offline: Please check your connection to refresh courses.');
+        } else {
+          setError('Failed to load courses. Pull down to retry.');
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -226,7 +243,7 @@ export default function HomeScreen() {
           marginBottom: 16,
         }}
       >
-        {searchQuery ? `Results for "${searchQuery}"` : 'Suggested for you'}
+        {searchQuery ? `Results for "${searchQuery}"` : 'Explore Courses'}
       </Text>
     </View>
   );

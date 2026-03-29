@@ -58,6 +58,12 @@ export default function RegisterScreen() {
       router.replace('/(auth)/login');
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string; errors?: any[] }>;
+      
+      if (axiosError.message === 'Network Error' || !axiosError.response) {
+        showToast('Connection failed. Please check your internet and try again.', 'error');
+        return;
+      }
+
       const message =
         axiosError.response?.data?.message ?? 
         (axiosError.response?.data?.errors && axiosError.response?.data?.errors.length > 0 

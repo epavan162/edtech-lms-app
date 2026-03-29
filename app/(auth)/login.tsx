@@ -74,11 +74,23 @@ export default function LoginScreen() {
       showToast('Welcome back! Signed in successfully.', 'success');
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string; errors?: any[] }>;
-      const message =
+      
+      if (axiosError.message === 'Network Error' || !axiosError.response) {
+        showToast('Connection failed. Please check your internet and try again.', 'error');
+        return;
+      }
+
+      let message =
         axiosError.response?.data?.message ?? 
         (axiosError.response?.data?.errors && axiosError.response?.data?.errors.length > 0 
           ? axiosError.response.data.errors[0] 
           : 'Login failed. Please try again.');
+
+      // Enhance 'User does not exist' for better UX
+      if (message === 'User does not exist') {
+        message = 'Account not found. Please check your username or create an account';
+      }
+
       showToast(message, 'error');
     }
   };
