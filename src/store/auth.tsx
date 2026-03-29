@@ -140,10 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (refreshToken) {
         await storage.setItem('refreshToken', refreshToken);
       }
-      // Cache user and persist credentials for biometric re-login
+      // Cache user for session recovery
       await storage.setItem('cached_user', JSON.stringify(user));
-      await storage.setItem('bio_username', credentials.username).catch(() => {});
-      await storage.setItem('bio_password', credentials.password).catch(() => {});
       dispatch({ type: 'LOGIN_SUCCESS', payload: user });
     } catch (error) {
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -172,8 +170,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await storage.deleteItem('accessToken').catch(() => {});
       await storage.deleteItem('refreshToken').catch(() => {});
       await storage.deleteItem('cached_user').catch(() => {});
-      await storage.deleteItem('bio_username').catch(() => {});
-      await storage.deleteItem('bio_password').catch(() => {});
       dispatch({ type: 'LOGOUT' });
     }
   }, []);
