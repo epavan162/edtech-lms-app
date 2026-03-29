@@ -108,15 +108,9 @@ export function CourseStoreProvider({ children }: { children: ReactNode }) {
       setBookmarks(updated);
       await AsyncStorage.setItem(key, JSON.stringify(updated));
       
-      // Trigger milestone notification if 5+ bookmarks (only once)
-      if (updated.length >= 5) {
-        const milestoneKey = `@atelier_milestone_sent_${userId}`;
-        const alreadySent = await AsyncStorage.getItem(milestoneKey);
-        
-        if (!alreadySent) {
-          notificationService.sendBookmarkMilestone(updated.length);
-          await AsyncStorage.setItem(milestoneKey, 'true');
-        }
+      // Trigger milestone notification if 5+ bookmarks (service handles singleton protection)
+      if (updated.length >= 5 && userId) {
+        notificationService.sendBookmarkMilestone(updated.length, userId);
       }
     },
     [bookmarks, userId],

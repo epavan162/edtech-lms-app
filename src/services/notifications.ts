@@ -46,10 +46,21 @@ export const notificationService = {
     return true;
   },
 
-  // Trigger when bookmarks >= 5
-  sendBookmarkMilestone: async (count: number) => {
-    if (!isNative) return;
-    if (count === 5) {
+  // Trigger when bookmarks >= 5 (singleton protection)
+  sendBookmarkMilestone: async (count: number, userId: string): Promise<void> => {
+    if (!isNative || count < 5) return;
+
+    const milestoneKey = `@atelier_u${userId}_milestone_sent`;
+    
+    try {
+      // 1. Persistent Check
+      const alreadySent = await AsyncStorage.getItem(milestoneKey);
+      if (alreadySent === 'true') return;
+
+      // 2. Local State Check (Prevent race condition within same session)
+      if ((global as any)._milestone_firing) return;
+      (global as any)._milestone_firing = true;
+
       await Notifications.scheduleNotificationAsync({
         content: {
           title: '📚 Curator Achievement!',
@@ -58,6 +69,13 @@ export const notificationService = {
         },
         trigger: null, // Fire immediately
       });
+
+      // 3. Persist Sent Flag
+      await AsyncStorage.setItem(milestoneKey, 'true');
+    } catch {
+      // Fail silently for notifications
+    } finally {
+      (global as any)._milestone_firing = false;
     }
   },
 
