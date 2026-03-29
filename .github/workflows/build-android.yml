@@ -98,7 +98,7 @@ jobs:
 
       - name: Build Android Release APK
         working-directory: ./android
-        run: ./gradlew assembleRelease --no-daemon --max-workers=2 --stacktrace -Dorg.gradle.jvmargs="-Xmx4g -XX:MaxMetaspaceSize=1g"
+        run: ./gradlew assembleRelease --no-daemon --max-workers=1 --no-parallel --stacktrace -Dorg.gradle.jvmargs="-Xmx6g -XX:MaxMetaspaceSize=1g"
         env:
           SENTRY_DISABLE_AUTO_UPLOAD: true
           EXPO_NO_TELEMETRY: 1
