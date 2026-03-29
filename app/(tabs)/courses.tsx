@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BookOpen, Bookmark, ArrowRight } from 'lucide-react-native';
+import { useAuth } from '../../src/store/auth';
 import { useCourseStore } from '../../src/store/courses';
 import { courseService } from '../../src/services/courses';
 import { Card } from '../../src/components/ui/Card';
@@ -25,6 +26,8 @@ type TabType = 'enrolled' | 'bookmarks';
 export default function CoursesScreen() {
   const router = useRouter();
   const { bookmarks, enrollments, isBookmarked, toggleBookmark } = useCourseStore();
+  const { user } = useAuth(); // Need user ID for scoping
+  const userId = user?._id;
   const [activeTab, setActiveTab] = useState<TabType>('enrolled');
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [bookmarkedCourses, setBookmarkedCourses] = useState<Course[]>([]);
@@ -62,11 +65,11 @@ export default function CoursesScreen() {
         setBookmarkedCourses(bookmarked);
       }
       
-      // Cache the detail objects for offline use (only if we got new data)
-      if (enrolled.length > 0 || bookmarked.length > 0) {
+      // Cache the detail objects for offline use (only if we got new data and have a user)
+      if (userId && (enrolled.length > 0 || bookmarked.length > 0)) {
         await Promise.all([
-          AsyncStorage.setItem('@atelier_cached_enrolled_details', JSON.stringify(enrolled)),
-          AsyncStorage.setItem('@atelier_cached_bookmarked_details', JSON.stringify(bookmarked)),
+          AsyncStorage.setItem(`@atelier_u${userId}_cached_enrolled_details`, JSON.stringify(enrolled)),
+          AsyncStorage.setItem(`@atelier_u${userId}_cached_bookmarked_details`, JSON.stringify(bookmarked)),
         ]);
       }
     } catch (err: any) {
@@ -80,25 +83,34 @@ export default function CoursesScreen() {
     }
   }, [enrollments, bookmarks, fetchCourseDetails, enrolledCourses.length, bookmarkedCourses.length]);
 
-  // Initial load from cache
+  // Initial load from cache (user-scoped)
   useEffect(() => {
+    if (!userId) {
+      setEnrolledCourses([]);
+      setBookmarkedCourses([]);
+      return;
+    }
+
     const loadFromCache = async () => {
       try {
         const [cachedEnrolled, cachedBookmarked] = await Promise.all([
-          AsyncStorage.getItem('@atelier_cached_enrolled_details'),
-          AsyncStorage.getItem('@atelier_cached_bookmarked_details'),
+          AsyncStorage.getItem(`@atelier_u${userId}_cached_enrolled_details`),
+          AsyncStorage.getItem(`@atelier_u${userId}_cached_bookmarked_details`),
         ]);
         if (cachedEnrolled) setEnrolledCourses(JSON.parse(cachedEnrolled));
+        else setEnrolledCourses([]);
+
         if (cachedBookmarked) setBookmarkedCourses(JSON.parse(cachedBookmarked));
+        else setBookmarkedCourses([]);
         
         // If we have cache, we can hide initial loader earlier
-        if (cachedEnrolled || cachedBookmarked) setLoading(false);
+        setLoading(false);
       } catch {
         // ...
       }
     };
     loadFromCache();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     loadData();
