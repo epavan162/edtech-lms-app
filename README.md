@@ -58,33 +58,33 @@ The course content view uses a sophisticated **WebView-to-Native bridge**.
 
 ### 📡 API & Data Mapping
 
-To fulfill the assignment criteria, the app maps standard FreeAPI endpoints to LMS-specific business logic:
+The application integrates standard FreeAPI endpoints and maps them to LMS-specific business logic:
 
-*   **📘 Course Catalog** (`GET /api/v1/public/randomproducts`)  
-    *Primary data source for titles, pricing, thumbnails, and descriptions.*
-*   **👨‍🏫 Instructor Profiles** (`GET /api/v1/public/randomusers`)  
-    *Used to provide professional names and portrait avatars for every course.*
-*   **🔐 Authentication** (`POST /api/v1/users/login` / `register`)  
-    *Handles secure session management and JWT persistence.*
-*   **📸 Profile Sync** (`PATCH /api/v1/users/avatar`)  
-    *Syncs local camera/gallery uploads with the remote user profile.*
+- **📘 Course Catalog** (`GET /api/v1/public/randomproducts`)  
+  _Primary data source for titles, pricing, thumbnails, and descriptions._
+- **👨‍🏫 Instructor Profiles** (`GET /api/v1/public/randomusers`)  
+  _Used to provide professional names and portrait avatars for every course._
+- **🔐 Authentication** (`POST /api/v1/users/login` / `register`)  
+  _Handles secure session management and JWT persistence._
+- **📸 Profile Sync** (`PATCH /api/v1/users/avatar`)  
+  _Syncs local camera/gallery uploads with the remote user profile._
 
 ---
 
 ## 🛠 Features Breakdown
 
-*   **🔐 Auth Architecture**  
-    JWT persistence, Auto-login on restart, and Hardware-backed Encryption via **SecureStore**.
-*   **🎓 High-Speed Catalog**  
-    **60FPS LegendList** integration with Debounced Search, Pull-to-refresh, and Skeleton loaders.
-*   **🤖 Smart Innovation**  
-    **Atelier AI Insights**: Automated, AI-generated course takeaways for streamlined learning.
-*   **🔔 Native Engagement**  
-    Milestone triggers (5+ bookmarks) and 24-hour smart inactivity reminders.
-*   **📸 Premium Profile**  
-    Direct Camera/Gallery integration with **Optimistic UI Updates** and signing-out chip.
-*   **🛡️ Hardened Security**  
-    **Jailbreak Detection**, Zod form validation, and full HTTPS enforcement.
+- **🔐 Auth Architecture**  
+  JWT persistence, Auto-login on restart, and Hardware-backed Encryption via **SecureStore**.
+- **🎓 High-Speed Catalog**  
+  **60FPS LegendList** integration with Debounced Search, Pull-to-refresh, and Skeleton loaders.
+- **🤖 Smart Innovation**  
+  **Atelier AI Insights**: Automated, AI-generated course takeaways for streamlined learning.
+- **🔔 Native Engagement**  
+  Milestone triggers (5+ bookmarks) and 24-hour smart inactivity reminders.
+- **📸 Device Profile Hub**  
+  Direct Camera/Gallery integration with **Optimistic UI Updates** and signing-out chip.
+- **🛡️ Hardened Security**  
+  **Jailbreak Detection**, Zod form validation, and full HTTPS enforcement.
 
 ---
 
@@ -101,7 +101,7 @@ To fulfill the assignment criteria, the app maps standard FreeAPI endpoints to L
 <div align="center">
   <table border="0" width="100%">
     <tr>
-      <td bgcolor="#F8FAFF" align="center" style="border: none; padding: 40px; border-radius: 12px">
+      <td bgcolor="#edeef1ff" align="center" style="border: none; padding: 40px; border-radius: 12px">
         <br/>
         <p align="center">
           <img src="https://img.shields.io/badge/-🔐%20Onboarding%20%26%20Core-29214D?style=for-the-badge" alt="Onboarding" />
@@ -231,6 +231,6 @@ We utilize **GitHub Actions** for professional-grade distribution:
 ---
 
 <div align="center">
-  <p><b>Developed with precision and care for the React Native Expo Developer Assignment.</b></p>
+  <p><b>Designed and developed as a production-ready mobile application showcasing real-world engineering practices.</b></p>
   <img src="https://img.shields.io/badge/Status-Complete-4CAF50?style=for-the-flat&logo=check" alt="Status" />
 </div>
