@@ -35,6 +35,8 @@
       "expo-secure-store",
       "expo-image",
       "expo-font",
+      "expo-image-picker",
+      "expo-file-system",
       [
         "expo-notifications",
         {
@@ -42,12 +44,11 @@
           "color": "#29214D"
         }
       ],
-      "@sentry/react-native",
       [
         "expo-build-properties",
         {
           "android": {
-            "newArchEnabled": false
+            "newArchEnabled": true
           }
         }
       ]
