@@ -58,28 +58,33 @@ The course content view uses a sophisticated **WebView-to-Native bridge**.
 
 ### 📡 API & Data Mapping
 
-To fulfill the specific logic requirements of the assignment, the app consumes and maps the **FreeAPI** endpoints as follows:
+To fulfill the assignment criteria, the app maps standard FreeAPI endpoints to LMS-specific business logic:
 
-| Endpoint | Logic Mapping | Purpose |
-| :--- | :--- | :--- |
-| `GET /api/v1/public/randomproducts` | **Courses** | Serves as the primary course catalog, providing titles, pricing, and descriptions. |
-| `GET /api/v1/public/randomusers` | **Instructors** | Mapped as course instructors to provide professional profiles and avatars. |
-| `POST /api/v1/users/register` | **User Onboarding** | Handles secure account creation. |
-| `POST /api/v1/users/login` | **Authentication** | Generates the JWT session tokens for SecureStore persistence. |
-| `PATCH /api/v1/users/avatar` | **Profile Sync** | Syncs local camera/gallery uploads with the remote user profile. |
+*   **📘 Course Catalog** (`GET /api/v1/public/randomproducts`)  
+    *Primary data source for titles, pricing, thumbnails, and descriptions.*
+*   **👨‍🏫 Instructor Profiles** (`GET /api/v1/public/randomusers`)  
+    *Used to provide professional names and portrait avatars for every course.*
+*   **🔐 Authentication** (`POST /api/v1/users/login` / `register`)  
+    *Handles secure session management and JWT persistence.*
+*   **📸 Profile Sync** (`PATCH /api/v1/users/avatar`)  
+    *Syncs local camera/gallery uploads with the remote user profile.*
 
 ---
 
 ## 🛠 Features Breakdown
 
-| Category             | High-Excellence Features                                                          |
-| :------------------- | :-------------------------------------------------------------------------------- |
-| **🔐 Auth**          | JWT persistence, Auto-login on restart, Secure password handling via SecureStore. |
-| **🎓 Catalog**       | 60FPS Infinite Scroll, Debounced Search, Pull-to-refresh, Skeleton loaders.       |
-| **🤖 Innovation**    | **Atelier AI Insights**: Automated, AI-generated course summaries and takeaways.  |
-| **🔔 Notifications** | Milestone triggers (5+ bookmarks) and 24h inactivity reminders.                   |
-| **📸 Profile**       | Direct camera/gallery integration for avatar updates with optimistic UI.          |
-| **🛡 Security**      | **Jailbreak Detection**, Zod form validation, and HTTPS enforcement.              |
+*   **🔐 Auth Architecture**  
+    JWT persistence, Auto-login on restart, and Hardware-backed Encryption via **SecureStore**.
+*   **🎓 High-Speed Catalog**  
+    **60FPS LegendList** integration with Debounced Search, Pull-to-refresh, and Skeleton loaders.
+*   **🤖 Smart Innovation**  
+    **Atelier AI Insights**: Automated, AI-generated course takeaways for streamlined learning.
+*   **🔔 Native Engagement**  
+    Milestone triggers (5+ bookmarks) and 24-hour smart inactivity reminders.
+*   **📸 Premium Profile**  
+    Direct Camera/Gallery integration with **Optimistic UI Updates** and signing-out chip.
+*   **🛡️ Hardened Security**  
+    **Jailbreak Detection**, Zod form validation, and full HTTPS enforcement.
 
 ---
 
@@ -93,30 +98,46 @@ To fulfill the specific logic requirements of the assignment, the app consumes a
 
 ## 📸 Screenshots & User Flow
 
-<div align="center">
-  <table style="width: 100%">
-    <tr>
-      <td align="center"><b>Login & Account</b></td>
-      <td align="center"><b>Home Dashboard</b></td>
-      <td align="center"><b>Course Detail</b></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="./assets/screenshots/1_login.png" alt="Login" width="180" /><br/><img src="./assets/screenshots/2_register.png" alt="Register" width="180" /></td>
-      <td align="center"><img src="./assets/screenshots/3_home.png" alt="Home" width="180" /><br/><img src="./assets/screenshots/4_explore.png" alt="Explore" width="180" /></td>
-      <td align="center"><img src="./assets/screenshots/5_course_detail.png" alt="Detail" width="180" /></td>
-    </tr>
-    <tr>
-      <td align="center"><b>My Learning & Bookmarks</b></td>
-      <td align="center"><b>Profile & Engagement</b></td>
-      <td align="center"><b>Resilience & WebView</b></td>
-    </tr>
-    <tr>
-      <td align="center"><img src="./assets/screenshots/7_bookmarks.png" alt="Bookmarks" width="180" /><br/><img src="./assets/screenshots/8_enrolled_courses.png" alt="Enrolled" width="180" /></td>
-      <td align="center"><img src="./assets/screenshots/11_profile.png" alt="Profile" width="180" /><br/><img src="./assets/screenshots/12_notifications.png" alt="Notifications" width="180" /></td>
-      <td align="center"><img src="./assets/screenshots/9_offline_mode.png" alt="Offline Mode" width="180" /><br/><img src="./assets/screenshots/10_webview_content.png" alt="WebView" width="180" /></td>
-    </tr>
-  </table>
-</div>
+<p align="center">
+  <img src="https://img.shields.io/badge/-🔐%20Onboarding%20%26%20Core-29214D?style=for-the-badge" alt="Onboarding" />
+</p>
+<p align="center">
+  <img src="./assets/screenshots/1_login.png" width="250" hspace="20" vspace="15" alt="Login Screen" />
+  <img src="./assets/screenshots/2_register.png" width="250" hspace="20" vspace="15" alt="Register Screen" />
+  <img src="./assets/screenshots/3_home.png" width="250" hspace="20" vspace="15" alt="Home Dashboard" />
+</p>
+
+---
+
+<p align="center">
+  <img src="https://img.shields.io/badge/-🎓%20Course%20Discovery-29214D?style=for-the-badge" alt="Discovery" />
+</p>
+<p align="center">
+  <img src="./assets/screenshots/4_explore.png" width="250" hspace="20" vspace="15" alt="Explore Catalog" />
+  <img src="./assets/screenshots/5_course_detail.png" width="250" hspace="20" vspace="15" alt="Course Details" />
+  <img src="./assets/screenshots/10_webview_content.png" width="250" hspace="20" vspace="15" alt="WebView Lessons" />
+</p>
+
+---
+
+<p align="center">
+  <img src="https://img.shields.io/badge/-👤%20User%20Hub%20%26%20Engagement-29214D?style=for-the-badge" alt="User Hub" />
+</p>
+<p align="center">
+  <img src="./assets/screenshots/11_profile.png" width="250" hspace="20" vspace="15" alt="Profile Screen" />
+  <img src="./assets/screenshots/8_enrolled_courses.png" width="250" hspace="20" vspace="15" alt="My Courses" />
+  <img src="./assets/screenshots/7_bookmarks.png" width="250" hspace="20" vspace="15" alt="Bookmarks" />
+</p>
+
+---
+
+<p align="center">
+  <img src="https://img.shields.io/badge/-🛡%EF%B8%8F%20Resilience%20%26%20Native-29214D?style=for-the-badge" alt="Resilience" />
+</p>
+<p align="center">
+  <img src="./assets/screenshots/9_offline_mode.png" width="250" hspace="20" vspace="15" alt="Offline Resilience" />
+  <img src="./assets/screenshots/12_notifications.png" width="250" hspace="20" vspace="15" alt="Native Notifications" />
+</p>
 
 ---
 
