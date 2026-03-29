@@ -17,9 +17,9 @@ import { notificationService } from '../services/notifications';
  * Also handles global caching for course lists to support offline mode.
  */
 
-function getUserKey(userId: string | undefined, suffix: string): string {
-  const id = userId ?? 'anonymous';
-  return `@atelier_${id}_${suffix}`;
+function getUserKey(userId: string | undefined, suffix: string): string | null {
+  if (!userId) return null;
+  return `@atelier_u${userId}_${suffix}`;
 }
 
 interface CourseStoreContextType {
@@ -58,10 +58,15 @@ export function CourseStoreProvider({ children }: { children: ReactNode }) {
     }
 
     async function loadData() {
+      const bookmarksKey = getUserKey(userId, 'bookmarks');
+      const enrollmentsKey = getUserKey(userId, 'enrollments');
+
+      if (!bookmarksKey || !enrollmentsKey) return;
+
       try {
         const [savedBookmarks, savedEnrollments, savedCourses, savedInstructors] = await Promise.all([
-          AsyncStorage.getItem(getUserKey(userId, 'bookmarks')),
-          AsyncStorage.getItem(getUserKey(userId, 'enrollments')),
+          AsyncStorage.getItem(bookmarksKey),
+          AsyncStorage.getItem(enrollmentsKey),
           AsyncStorage.getItem('@atelier_global_courses'),
           AsyncStorage.getItem('@atelier_global_instructors'),
         ]);
@@ -93,18 +98,25 @@ export function CourseStoreProvider({ children }: { children: ReactNode }) {
 
   const toggleBookmark = useCallback(
     async (courseId: number) => {
+      const key = getUserKey(userId, 'bookmarks');
+      if (!key) return;
+
       const updated = bookmarks.includes(courseId)
         ? bookmarks.filter((id) => id !== courseId)
         : [...bookmarks, courseId];
-      setBookmarks(updated);
-      await AsyncStorage.setItem(
-        getUserKey(userId, 'bookmarks'),
-        JSON.stringify(updated),
-      );
       
-      // Trigger milestone notification if 5+ bookmarks
+      setBookmarks(updated);
+      await AsyncStorage.setItem(key, JSON.stringify(updated));
+      
+      // Trigger milestone notification if 5+ bookmarks (only once)
       if (updated.length >= 5) {
-        notificationService.sendBookmarkMilestone(updated.length);
+        const milestoneKey = `@atelier_milestone_sent_${userId}`;
+        const alreadySent = await AsyncStorage.getItem(milestoneKey);
+        
+        if (!alreadySent) {
+          notificationService.sendBookmarkMilestone(updated.length);
+          await AsyncStorage.setItem(milestoneKey, 'true');
+        }
       }
     },
     [bookmarks, userId],
@@ -112,13 +124,12 @@ export function CourseStoreProvider({ children }: { children: ReactNode }) {
 
   const enrollCourse = useCallback(
     async (courseId: number) => {
-      if (enrollments.includes(courseId)) return;
+      const key = getUserKey(userId, 'enrollments');
+      if (!key || enrollments.includes(courseId)) return;
+
       const updated = [...enrollments, courseId];
       setEnrollments(updated);
-      await AsyncStorage.setItem(
-        getUserKey(userId, 'enrollments'),
-        JSON.stringify(updated),
-      );
+      await AsyncStorage.setItem(key, JSON.stringify(updated));
     },
     [enrollments, userId],
   );

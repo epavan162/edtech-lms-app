@@ -93,13 +93,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           dispatch({ type: 'INITIALIZED' });
           return;
         }
-        const response = await authService.getCurrentUser();
-        const rawData = response as any;
-        const user = rawData?.data?.data ?? rawData?.data ?? rawData;
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user });
-      } catch {
+
+        // Try to get fresh user data
+        try {
+          const response = await authService.getCurrentUser();
+          const rawData = response as any;
+          const user = rawData?.data?.data ?? rawData?.data ?? rawData;
+          if (user?._id) {
+            await storage.setItem('cached_user', JSON.stringify(user));
+            dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+          } else {
+            throw new Error('Invalid user data');
+          }
+        } catch (apiError) {
+          // Check if we have a cached user for offline fallback
+          const cachedUserJson = await storage.getItem('cached_user');
+          if (cachedUserJson) {
+            const user = JSON.parse(cachedUserJson);
+            dispatch({ type: 'LOGIN_SUCCESS', payload: user });
+            console.log('Using cached user for offline session recovery');
+          } else {
+            throw apiError; // No cache, let the main catch handle it
+          }
+        }
+      } catch (error) {
         await storage.deleteItem('accessToken').catch(() => {});
         await storage.deleteItem('refreshToken').catch(() => {});
+        await storage.deleteItem('cached_user').catch(() => {});
         dispatch({ type: 'INITIALIZED' });
       }
     };
@@ -120,7 +140,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (refreshToken) {
         await storage.setItem('refreshToken', refreshToken);
       }
-      // Persist credentials for biometric re-login
+      // Cache user and persist credentials for biometric re-login
+      await storage.setItem('cached_user', JSON.stringify(user));
       await storage.setItem('bio_username', credentials.username).catch(() => {});
       await storage.setItem('bio_password', credentials.password).catch(() => {});
       dispatch({ type: 'LOGIN_SUCCESS', payload: user });
@@ -150,6 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       await storage.deleteItem('accessToken').catch(() => {});
       await storage.deleteItem('refreshToken').catch(() => {});
+      await storage.deleteItem('cached_user').catch(() => {});
       await storage.deleteItem('bio_username').catch(() => {});
       await storage.deleteItem('bio_password').catch(() => {});
       dispatch({ type: 'LOGOUT' });
